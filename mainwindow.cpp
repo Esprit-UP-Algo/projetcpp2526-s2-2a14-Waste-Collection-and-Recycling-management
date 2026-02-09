@@ -98,7 +98,7 @@ void MainWindow::createSidebar()
         logoLabel->setScaledContents(false);
     } else {
         // Fallback: colored circle if logo not found
-        logoLabel->setStyleSheet("background: #9BCB4E; border-radius: 40px;");
+        logoLabel->setStyleSheet("background: #A3C651; border-radius: 40px;");
     }
 
     QLabel *titleLabel = new QLabel("TuniWaste");
@@ -112,14 +112,13 @@ void MainWindow::createSidebar()
 
     // Menu Items
     QStringList menuItems = {
-        "📊 Tableau de bord",
-        "👥 Gestion des utilisateurs",
+        "🏠 Tableau de bord",
+        "👤 Gestion des utilisateurs",
         "🚛 Gestion des camions",
-        "🗑️ Gestion des poubelles",
-        "🏔️ Gestion des zones",
-        "♻️ Gestion de recyclage",
+        "📍 Gestion des routes",
         "📊 Suivi des collectes",
-        "📄 Rapports"
+        "📄 Rapports",
+        "⚙️ Paramètres"
     };
 
     for (int i = 0; i < menuItems.size(); ++i) {
@@ -139,15 +138,6 @@ void MainWindow::createSidebar()
     }
 
     sidebarLayout->addStretch();
-
-    // Paramètres button at bottom
-    QPushButton *settingsBtn = new QPushButton("⚙️ Paramètres");
-    settingsBtn->setObjectName("menuItem");
-    settingsBtn->setCursor(Qt::PointingHandCursor);
-    settingsBtn->setFixedHeight(50);
-    connect(settingsBtn, &QPushButton::clicked, this, &MainWindow::onMenuItemClicked);
-    sidebarLayout->addWidget(settingsBtn);
-
 
     // User Profile
     QWidget *userWidget = new QWidget();
@@ -371,9 +361,17 @@ void MainWindow::createMainContent()
     truckTable->setColumnCount(6);
     truckTable->setHorizontalHeaderLabels({"ID", "Type", "Capacité", "Statut", "Localisation", "Actions"});
 
-    truckTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    truckTable->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Fixed);
-    truckTable->setColumnWidth(5, 200);
+    // Set column widths for better proportions
+    truckTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    truckTable->setColumnWidth(0, 50);   // ID - plus petit
+    truckTable->setColumnWidth(1, 150);  // Type
+    truckTable->setColumnWidth(2, 100);  // Capacité
+    truckTable->setColumnWidth(3, 120);  // Statut
+    truckTable->setColumnWidth(4, 150);  // Localisation
+    truckTable->setColumnWidth(5, 180);  // Actions - réduit de 200 à 180
+
+    // Allow last section to stretch to fill remaining space
+    truckTable->horizontalHeader()->setStretchLastSection(false);
 
     truckTable->verticalHeader()->setVisible(false);
     truckTable->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -408,6 +406,7 @@ void MainWindow::createMainContent()
     exportPdfButton = new QPushButton("📄 Exporter PDF");
     exportPdfButton->setObjectName("exportPdfButton");
     exportPdfButton->setFixedHeight(40);
+    exportPdfButton->setMinimumWidth(150);  // Largeur minimum pour être bien visible
     exportPdfButton->setCursor(Qt::PointingHandCursor);
     connect(exportPdfButton, &QPushButton::clicked, this, &MainWindow::onExportPDF);
 
@@ -415,6 +414,7 @@ void MainWindow::createMainContent()
     paginationLayout->addStretch();
     paginationLayout->addLayout(pageButtonsLayout);
     paginationLayout->addWidget(itemsPerPage);
+    paginationLayout->addSpacing(15);  // Espace avant le bouton Export
     paginationLayout->addWidget(exportPdfButton);
 
     wrapperLayout->addLayout(paginationLayout);
@@ -560,7 +560,7 @@ void MainWindow::updateChartData()
 
             // Add status bars
             addStatBar(layout, "Actif", activeCount, truckTable->rowCount(), "#4CAF50");
-            addStatBar(layout, "Maintenance", maintenanceCount, truckTable->rowCount(), "#F5A623");
+            addStatBar(layout, "Maintenance", maintenanceCount, truckTable->rowCount(), "#FF9800");
             addStatBar(layout, "En panne", brokenCount, truckTable->rowCount(), "#F44336");
 
             layout->addStretch();
@@ -625,20 +625,18 @@ void MainWindow::addTableRow(int id, const QString &type, const QString &capacit
     actionLayout->setContentsMargins(5, 5, 5, 5);
     actionLayout->setSpacing(8);
 
-    QPushButton *modifyBtn = new QPushButton("Modifier");
+    QPushButton *modifyBtn = new QPushButton("✏️ Modifier");
     modifyBtn->setObjectName("modifyButton");
     modifyBtn->setCursor(Qt::PointingHandCursor);
     modifyBtn->setFixedHeight(35);
-    modifyBtn->setMinimumWidth(90);
     connect(modifyBtn, &QPushButton::clicked, [this, row]() {
         onModifyTruck(row);
     });
 
-    QPushButton *deleteBtn = new QPushButton("Supprimer");
+    QPushButton *deleteBtn = new QPushButton("🗑️");
     deleteBtn->setObjectName("deleteButton");
     deleteBtn->setCursor(Qt::PointingHandCursor);
-    deleteBtn->setMinimumWidth(90);
-    deleteBtn->setFixedHeight(35);
+    deleteBtn->setFixedSize(35, 35);
     connect(deleteBtn, &QPushButton::clicked, [this, row]() {
         onDeleteTruck(row);
     });
@@ -654,13 +652,13 @@ void MainWindow::addTableRow(int id, const QString &type, const QString &capacit
 QString MainWindow::getStatusStyle(const QString &status)
 {
     if (status == "Actif") {
-        return "background: #E3F2FD; color: #4DA3FF; padding: 8px 16px; "
+        return "background: #E8F5E9; color: #4CAF50; padding: 8px 16px; "
                "border-radius: 20px; font-weight: bold; font-size: 13px;";
     } else if (status == "Maintenance") {
-        return "background: #FFF3E0; color: #F5A623; padding: 8px 16px; "
+        return "background: #FFF3E0; color: #FF9800; padding: 8px 16px; "
                "border-radius: 20px; font-weight: bold; font-size: 13px;";
     } else if (status == "En panne") {
-        return "background: #FFEBEE; color: #E74C3C; padding: 8px 16px; "
+        return "background: #FFEBEE; color: #F44336; padding: 8px 16px; "
                "border-radius: 20px; font-weight: bold; font-size: 13px;";
     }
     return "";
@@ -702,25 +700,14 @@ void MainWindow::setFormForEditing(int row)
 }
 
 void MainWindow::applyStyles()
-// ==================== CHARTE GRAPHIQUE TUNIWASTE ====================
-// Vert principal (branding): #9BCB4E - Boutons primaires, bordures actives, logo
-// Vert sidebar (menu): #7FB069 - Fond du menu latéral
-// Vert hover/accents: #B7D97A - États hover sur éléments verts
-// Vert action (modifier): #2ECC71 - Bouton modifier
-// Bleu (Employé/Actif): #4DA3FF - Badge employé, boutons secondaires
-// Orange (Admin): #F5A623 - Badge administrateur/maintenance
-// Rouge (Supprimer): #E74C3C - Bouton supprimer, actions critiques
-// Fond principal: #F7F7F7 - Pages internes, dashboard
-// Fond recherche: #FFFFFF - Fond input recherche (icône: #9BCB4E)
-// Texte placeholder: #B0B0B0
-// ====================================================================
 {
     QString styleSheet = R"(
         QMainWindow {
-            background: #F7F7F7;
+            background: #f5f5f5;
         }
         #sidebar {
-            background: #5A8C4A;
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                        stop:0 #2C5F2D, stop:1 #1E4620);
         }
         #logoTitle {
             color: white;
@@ -729,21 +716,20 @@ void MainWindow::applyStyles()
         }
         #menuItem {
             background: transparent;
-            color: white;
+            color: rgba(255, 255, 255, 0.8);
             border: none;
             text-align: left;
-            padding-left: 20px;
-            font-size: 14px;
-            font-weight: 500;
+            padding-left: 30px;
+            font-size: 15px;
         }
         #menuItem:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.1);
             color: white;
         }
         #menuItem[active="true"] {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(163, 198, 81, 0.3);
             color: white;
-            border-left: 4px solid white;
+            border-left: 4px solid #A3C651;
             font-weight: bold;
         }
         #userName {
@@ -755,7 +741,7 @@ void MainWindow::applyStyles()
             border-right: 1px solid #e0e0e0;
         }
         #formTitle {
-            color: #34495e;
+            color: #2C5F2D;
         }
         #formLabel {
             color: #000000;
@@ -771,10 +757,10 @@ void MainWindow::applyStyles()
             color: #000000;
         }
         #formInput:focus {
-            border-color: #9BCB4E;
+            border-color: #A3C651;
         }
         #saveButton {
-            background: #9BCB4E;
+            background: #A3C651;
             color: white;
             border: none;
             border-radius: 10px;
@@ -782,17 +768,17 @@ void MainWindow::applyStyles()
             font-weight: bold;
         }
         #saveButton:hover {
-            background: #B7D97A;
+            background: #8AB344;
         }
         #infoBox {
             background: #E3F2FD;
             color: #1976D2;
             padding: 15px;
             border-radius: 10px;
-            border-left: 4px solid #4DA3FF;
+            border-left: 4px solid #2196F3;
         }
         #mainContent {
-            background: #F7F7F7;
+            background: #f5f5f5;
         }
         #header {
             background: white;
@@ -803,13 +789,13 @@ void MainWindow::applyStyles()
             font-size: 13px;
         }
         #headerBtn {
-            background: #F7F7F7;
+            background: #f5f5f5;
             border: none;
             border-radius: 10px;
             font-size: 18px;
         }
         #headerBtn:hover {
-            background: #9BCB4E;
+            background: #A3C651;
         }
         #contentWrapper {
             background: white;
@@ -858,29 +844,27 @@ void MainWindow::applyStyles()
             color: #000000;
         }
         #modifyButton {
-            background: #2ECC71;
-            color: white;
+            background: #E3F2FD;
+            color: #2196F3;
             border: none;
             border-radius: 8px;
-            padding: 6px 20px;
+            padding: 8px 20px;
             font-size: 13px;
-            font-weight: 600;
         }
         #modifyButton:hover {
-            background: #27ae60;
+            background: #2196F3;
             color: white;
         }
         #deleteButton {
-            background: #E74C3C;
-            color: white;
+            background: #FFEBEE;
+            color: #B84446;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 8px 15px;
-            font-weight: 600;
             font-size: 13px;
         }
         #deleteButton:hover {
-            background: #c0392b;
+            background: #B84446;
             color: white;
         }
         #paginationInfo {
@@ -893,14 +877,14 @@ void MainWindow::applyStyles()
             border-radius: 8px;
         }
         #pageButton:hover {
-            background: #9BCB4E;
+            background: #A3C651;
             color: white;
-            border-color: #9BCB4E;
+            border-color: #A3C651;
         }
         #pageButton[active="true"] {
-            background: #9BCB4E;
+            background: #A3C651;
             color: white;
-            border-color: #9BCB4E;
+            border-color: #A3C651;
             font-weight: bold;
         }
         #itemsPerPage {
@@ -910,16 +894,18 @@ void MainWindow::applyStyles()
             background: white;
         }
         #exportPdfButton {
-            background: #F5A623;
+            background: #FF5722;
             color: white;
             border: none;
             border-radius: 8px;
-            padding: 0 20px;
-            font-size: 14px;
+            padding: 0 25px;
+            font-size: 15px;
             font-weight: bold;
+            min-width: 150px;
         }
         #exportPdfButton:hover {
-            background: #e59819;
+            background: #E64A19;
+            transform: scale(1.02);
         }
         #chartWidget {
             background: white;
@@ -940,7 +926,7 @@ void MainWindow::applyStyles()
             margin-bottom: 15px;
         }
         #statValue {
-            color: #9BCB4E;
+            color: #A3C651;
         }
         #statLabel {
             color: #666;
@@ -1083,30 +1069,30 @@ void MainWindow::onExportPDF()
     out << "<meta charset='UTF-8'>\n";
     out << "<title>TuniWaste - Rapport des Camions</title>\n";
     out << "<style>\n";
-    out << "body { font-family: Arial, sans-serif; margin: 40px; background: #F7F7F7; }\n";
+    out << "body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }\n";
     out << ".container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }\n";
-    out << "h1 { color: #34495e; text-align: center; font-size: 36px; margin-bottom: 10px; }\n";
-    out << "h2 { color: #34495e; font-size: 24px; margin-top: 30px; border-bottom: 3px solid #9BCB4E; padding-bottom: 10px; }\n";
+    out << "h1 { color: #2C5F2D; text-align: center; font-size: 36px; margin-bottom: 10px; }\n";
+    out << "h2 { color: #2C5F2D; font-size: 24px; margin-top: 30px; border-bottom: 3px solid #A3C651; padding-bottom: 10px; }\n";
     out << ".subtitle { text-align: center; color: #666; margin-bottom: 10px; }\n";
     out << ".date { text-align: center; color: #999; font-size: 14px; margin-bottom: 40px; }\n";
     out << ".stats { display: flex; justify-content: space-around; margin: 30px 0; }\n";
     out << ".stat-box { flex: 1; margin: 0 10px; padding: 20px; border-radius: 10px; text-align: center; }\n";
     out << ".stat-box.total { background: #E8F5E9; border: 2px solid #4CAF50; }\n";
-    out << ".stat-box.active { background: #E3F2FD; border: 2px solid #4DA3FF; }\n";
-    out << ".stat-box.capacity { background: #FFF3E0; border: 2px solid #F5A623; }\n";
+    out << ".stat-box.active { background: #E3F2FD; border: 2px solid #2196F3; }\n";
+    out << ".stat-box.capacity { background: #FFF3E0; border: 2px solid #FF9800; }\n";
     out << ".stat-title { font-size: 14px; color: #666; margin-bottom: 10px; }\n";
     out << ".stat-value { font-size: 48px; font-weight: bold; margin: 10px 0; }\n";
     out << ".stat-box.total .stat-value { color: #4CAF50; }\n";
-    out << ".stat-box.active .stat-value { color: #4DA3FF; }\n";
-    out << ".stat-box.capacity .stat-value { color: #F5A623; }\n";
+    out << ".stat-box.active .stat-value { color: #2196F3; }\n";
+    out << ".stat-box.capacity .stat-value { color: #FF9800; }\n";
     out << "table { width: 100%; border-collapse: collapse; margin-top: 20px; }\n";
-    out << "th { background: #34495e; color: white; padding: 15px; text-align: left; font-weight: bold; }\n";
+    out << "th { background: #2C5F2D; color: white; padding: 15px; text-align: left; font-weight: bold; }\n";
     out << "td { padding: 12px 15px; border-bottom: 1px solid #eee; }\n";
     out << "tr:nth-child(even) { background: #f9f9f9; }\n";
     out << "tr:hover { background: #f0f0f0; }\n";
     out << ".status { padding: 6px 12px; border-radius: 15px; font-weight: bold; font-size: 12px; display: inline-block; }\n";
     out << ".status-actif { background: #E8F5E9; color: #4CAF50; }\n";
-    out << ".status-maintenance { background: #FFF3E0; color: #F5A623; }\n";
+    out << ".status-maintenance { background: #FFF3E0; color: #FF9800; }\n";
     out << ".status-panne { background: #FFEBEE; color: #F44336; }\n";
     out << ".footer { text-align: center; color: #999; margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; }\n";
     out << "@media print { body { margin: 0; background: white; } .container { box-shadow: none; } }\n";

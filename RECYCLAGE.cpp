@@ -28,27 +28,24 @@ Recyclage::Recyclage(QWidget *parent) : QMainWindow(parent)
 {
     QWidget *central = new QWidget(this);
     setCentralWidget(central);
-    central->setStyleSheet("background:#F4F6F8;");
+    central->setStyleSheet("background:#F5F5F5;");
 
     /* ================= SIDEBAR ================= */
     QFrame *sidebar = new QFrame;
-    sidebar->setFixedWidth(260);
-    sidebar->setStyleSheet("background:#5d9e63;"); // Matching the screenshot green (approx)
+    sidebar->setFixedWidth(343);
+    sidebar->setStyleSheet("background:#6FA85E;");
 
     QVBoxLayout *side = new QVBoxLayout(sidebar);
-    side->setSpacing(5);
-    side->setContentsMargins(0, 20, 0, 20);
+    side->setSpacing(0);
+    side->setContentsMargins(0, 0, 0, 0);
 
-    // Header Container
     QWidget *headerWidget = new QWidget;
     QHBoxLayout *headerLayout = new QHBoxLayout(headerWidget);
-    headerLayout->setContentsMargins(20, 0, 20, 20); // Add padding
+    headerLayout->setContentsMargins(20, 20, 20, 20);
     
     QLabel *logo = new QLabel;
-    // Logo setup
-    QPixmap logoPix("logo.png"); // Make sure logo.png is in the build directory
+    QPixmap logoPix("logo.png");
     if(logoPix.isNull()) {
-         // Try absolute path for safety if relative fails (dev convenience)
          logoPix.load("c:/Users/LENOVO/Downloads/CR/logo.png"); 
     }
     
@@ -56,45 +53,43 @@ Recyclage::Recyclage(QWidget *parent) : QMainWindow(parent)
         logo->setText("♻️"); 
         logo->setStyleSheet("font-size:30px; color:white; background:transparent; border:none;");
     } else {
-        // Remove white background
         logoPix.setMask(logoPix.createMaskFromColor(Qt::white));
-        
-        // Scale to small icon size
-        logo->setPixmap(logoPix.scaled(40,40,Qt::KeepAspectRatio,Qt::SmoothTransformation));
+        logo->setPixmap(logoPix.scaled(80,80,Qt::KeepAspectRatio,Qt::SmoothTransformation));
         logo->setStyleSheet("background:transparent; border:none;");
     }
     logo->setAlignment(Qt::AlignCenter);
 
     QLabel *app = new QLabel("TuniWaste");
-    app->setStyleSheet("color:white;font-size:20px;font-weight:800;font-family: 'Segoe UI', sans-serif; background:transparent; border:none;");
+    app->setStyleSheet("color:white;font-size:26px;font-weight:bold;font-family: 'Segoe UI', sans-serif; background:transparent; border:none;");
     
     headerLayout->addWidget(logo);
     headerLayout->addWidget(app);
-    headerLayout->addStretch(); // Push to left if needed, or center? Screenshot shows left alignment or center block.
-    // Actually screenshot shows: [Icon] TuniWaste. Centered or Left?
-    // Let's keep them handled by layout.
+    headerLayout->addStretch();
     
     side->addWidget(headerWidget);
 
-    // Sidebar Menu Item Helper with Emojis for "Colored Logos"
     auto menu = [&](const QString &icon, const QString &text, bool active = false){
         QPushButton *btn = new QPushButton(icon + "  " + text);
         btn->setCursor(Qt::PointingHandCursor);
         btn->setStyleSheet(
             "QPushButton { "
-            "   color:white; font-size:15px; text-align:left; padding:12px 20px; border:none; font-family: 'Segoe UI', sans-serif; font-weight: 500;"
-            "   background-color: " + QString(active ? "#4a8a50" : "transparent") + ";" // Darker highlight
-            "   border-left: " + QString(active ? "4px solid #FBC02D" : "4px solid transparent") + ";" // Orange accents in screenshot? Or white? Let's stick to screenshot hint. Screenshot shows no left border maybe, but distinct background.
-            // Actually screenshot shows: Simple text, generic icons. The selected item has a slightly different background?
-            // Let's stick to the user's previous "active" style but refine colors.
+            "   color:white; font-size:15px; text-align:left; padding:15px 20px; border:none; font-family: 'Segoe UI', sans-serif; font-weight: 500;"
+            "   background-color: " + QString(active ? "#5A8F47" : "transparent") + ";"
+            "   border-left: " + QString(active ? "4px solid #FBC02D" : "4px solid transparent") + ";"
             "}"
-            "QPushButton:hover { background-color:#6ba370; }"
+            "QPushButton:hover { background-color:#7DB86D; }"
         );
         return btn;
     };
 
-    side->addWidget(menu("🏠", "Tableau de bord"));
-    side->addWidget(menu("👥", "Gestion des utilisateurs"));
+    QPushButton *dashboardBtn = menu("🏠", "Tableau de bord");
+    connect(dashboardBtn, &QPushButton::clicked, this, &QWidget::close);
+    side->addWidget(dashboardBtn);
+
+    QPushButton *usersBtn = menu("👥", "Gestion des utilisateurs");
+    connect(usersBtn, &QPushButton::clicked, this, &QWidget::close);
+    side->addWidget(usersBtn);
+
     side->addWidget(menu("🚚", "Gestion des camions"));
     side->addWidget(menu("🗑️", "Gestion des poubelles"));
     side->addWidget(menu("🗺️", "Gestion des zones"));
@@ -107,36 +102,59 @@ Recyclage::Recyclage(QWidget *parent) : QMainWindow(parent)
     /* ================= CONTENT ================= */
     QWidget *content = new QWidget;
     
-    // ... (rest of layout structure) ...
-    // Note: To avoid replacing the whole file and losing Search fix, I will target the specific sidebar block
-    // But replace_file_content needs contiguous block. 
     QVBoxLayout *contentLayout = new QVBoxLayout(content);
+    contentLayout->setContentsMargins(40, 30, 40, 30);
     contentLayout->setSpacing(20);
-    contentLayout->setContentsMargins(30, 30, 30, 30);
 
-    /* ===== Header ===== */
-    // Brand
-    QLabel *brand = new QLabel("TuniWaste");
-    brand->setStyleSheet("color:#5d9e63;font-size:20px;font-weight:800;font-family: 'Segoe UI', sans-serif; margin-bottom: 5px;");
+    QWidget *topWidget = new QWidget();
+    topWidget->setStyleSheet("background: transparent;");
+    QVBoxLayout *topLayout = new QVBoxLayout(topWidget);
+    topLayout->setContentsMargins(0, 0, 0, 0);
+    topLayout->setSpacing(10);
 
-    // Path
-    QLabel *path = new QLabel("Tableau de bord / Tableau de bord / Gestion de recyclage");
-    path->setStyleSheet("color:#90A4AE;font-size:14px; margin-bottom: 10px; font-weight: 500;");
+    QWidget *brandRow = new QWidget();
+    QHBoxLayout *brandLayout = new QHBoxLayout(brandRow);
+    brandLayout->setContentsMargins(0, 0, 0, 0);
 
-    // Title
-    QLabel *title = new QLabel("Gestion de recyclage");
-    title->setStyleSheet("color:#212121;font-size:28px;font-weight:800;font-family: 'Segoe UI', sans-serif;");
+    QLabel *brandLabel = new QLabel("TuniWaste");
+    brandLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #6FA85E; background: transparent;");
+    brandLayout->addWidget(brandLabel);
+    brandLayout->addStretch();
 
-    contentLayout->addWidget(brand);
-    contentLayout->addWidget(path);
-    contentLayout->addWidget(title);
+    QLabel *breadcrumbBox = new QLabel("Tableau de bord / Gestion de recyclage");
+    breadcrumbBox->setStyleSheet(
+        "font-size: 14px; color: #999999; background-color: #FFFFFF; "
+        "padding: 8px 15px; border: 1px solid #DDDDDD; border-radius: 4px;"
+    );
+    brandLayout->addWidget(breadcrumbBox);
+
+    topLayout->addWidget(brandRow);
+
+    QLabel *pathLabel = new QLabel("Tableau de bord / Tableau de bord / Gestion de recyclage");
+    pathLabel->setStyleSheet("font-size: 13px; color: #999999; background: transparent;");
+    topLayout->addWidget(pathLabel);
+
+    contentLayout->addWidget(topWidget);
+
+    QLabel *titleLabel = new QLabel("Gestion de recyclage");
+    titleLabel->setStyleSheet("font-size: 28px; font-weight: bold; color: #000000; background: transparent;");
+    contentLayout->addWidget(titleLabel);
     contentLayout->addSpacing(20);
 
-    /* ===== Search & Filter Bar ===== */
-    QHBoxLayout *searchLayout = new QHBoxLayout;
-    QString searchStyle = "QLineEdit{background:white;border:none;padding:10px;border-radius:6px;min-width:200px;color:#455A64;}";
+    QWidget *searchCard = new QWidget();
+    searchCard->setStyleSheet(
+        "background-color: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 6px; padding: 15px;"
+    );
+    QHBoxLayout *searchLayout = new QHBoxLayout(searchCard);
+    searchLayout->setSpacing(15);
     
-    // Correctly initialize member variables
+    QString searchStyle = 
+        "QLineEdit { "
+        "   padding: 10px 15px; border: 2px solid #DDDDDD; border-radius: 6px; "
+        "   background-color: #FFFFFF; color: #000000; font-size: 14px; min-width: 180px; "
+        "}"
+        "QLineEdit:focus { border: 2px solid #6FA85E; }";
+    
     searchID = new QLineEdit;
     searchID->setPlaceholderText("🔍 Rechercher par ID...");
     searchID->setStyleSheet(searchStyle);
@@ -146,17 +164,40 @@ Recyclage::Recyclage(QWidget *parent) : QMainWindow(parent)
     searchCentre->setStyleSheet(searchStyle);
 
     QLabel *lblSort = new QLabel("Trier par:");
-    lblSort->setStyleSheet("color:#455A64;font-weight:600;");
+    lblSort->setStyleSheet("font-size: 14px; font-weight: bold; color: #000000; background: transparent; border: none;");
 
     QPushButton *btnSort = new QPushButton("Quantité");
-    btnSort->setStyleSheet("QPushButton{background:white;color:#455A64;border:none;padding:10px 20px;border-radius:6px;}");
+    btnSort->setStyleSheet(
+        "QPushButton { "
+        "   padding: 10px 15px; border: 2px solid #DDDDDD; border-radius: 6px; "
+        "   background-color: #FFFFFF; color: #000000; font-size: 14px; font-weight: bold; "
+        "}"
+        "QPushButton:hover { background-color: #F5F5F5; }"
+    );
     btnSort->setIcon(QApplication::style()->standardIcon(QStyle::SP_TitleBarShadeButton));
     
-    // PDF Button
     QPushButton *btnPdf = new QPushButton("📄 Exporter PDF");
-    btnPdf->setStyleSheet("QPushButton{background:#E53935;color:white;font-weight:800;padding:10px 20px;border-radius:6px;} QPushButton:hover{background:#D32F2F;}");
+    btnPdf->setStyleSheet(
+        "QPushButton { background-color: #FF9800; color: white; font-weight: bold; padding: 10px 20px; border-radius: 4px; border: none; font-size: 14px; }"
+        "QPushButton:hover { background-color: #F57C00; }"
+    );
     
-    // PDF Logic (Using 300 DPI and correct layout)
+    QPushButton *btnAdd = new QPushButton(" + Ajouter recyclage");
+    btnAdd->setStyleSheet(
+        "QPushButton { background-color: #A3D977; color: white; font-weight: bold; padding: 10px 20px; border-radius: 4px; border: none; font-size: 14px; }"
+        "QPushButton:hover { background-color: #8FC65E; }"
+    );
+
+    searchLayout->addWidget(searchID);
+    searchLayout->addWidget(searchCentre);
+    searchLayout->addStretch();
+    searchLayout->addWidget(lblSort);
+    searchLayout->addWidget(btnSort);
+    searchLayout->addWidget(btnPdf); 
+    searchLayout->addWidget(btnAdd);
+
+    contentLayout->addWidget(searchCard);
+
     connect(btnPdf, &QPushButton::clicked, this, [=](){
         QString fileName = QFileDialog::getSaveFileName(this, "Exporter en PDF", "", "PDF Files (*.pdf)");
         if (fileName.isEmpty()) return;
@@ -174,7 +215,7 @@ Recyclage::Recyclage(QWidget *parent) : QMainWindow(parent)
         int headerHeight = 350;
         
         // Header
-        painter.fillRect(QRect(0, 0, width, headerHeight), QColor("#5d9e63"));
+        painter.fillRect(QRect(0, 0, width, headerHeight), QColor("#6FA85E"));
         painter.setPen(Qt::white);
         painter.setFont(QFont("Segoe UI", 36, QFont::ExtraBold));
         painter.drawText(QRect(50, 0, width - 100, headerHeight), Qt::AlignVCenter | Qt::AlignLeft, "TuniWaste");
@@ -198,10 +239,10 @@ Recyclage::Recyclage(QWidget *parent) : QMainWindow(parent)
         }
         
         // General Stats Section
-        painter.setPen(QColor("#5d9e63"));
+        painter.setPen(QColor("#6FA85E"));
         painter.setFont(QFont("Segoe UI", 18, QFont::Bold));
         painter.drawText(50, y, "STATISTIQUES GÉNÉRALES");
-        QPen greenPen(QColor("#5d9e63")); greenPen.setWidth(3); painter.setPen(greenPen);
+        QPen greenPen(QColor("#6FA85E")); greenPen.setWidth(3); painter.setPen(greenPen);
         painter.drawLine(50, y + 30, width - 50, y + 30);
         y += 100;
         
@@ -210,7 +251,7 @@ Recyclage::Recyclage(QWidget *parent) : QMainWindow(parent)
         painter.drawText(80, y, "• Quantité totale traitée: " + QString::number(totalQ, 'f', 2) + " kg"); y += 150;
         
         // Details Section
-        painter.setPen(QColor("#5d9e63")); painter.setFont(QFont("Segoe UI", 18, QFont::Bold));
+        painter.setPen(QColor("#6FA85E")); painter.setFont(QFont("Segoe UI", 18, QFont::Bold));
         painter.drawText(50, y, "DÉTAILS PAR TYPE"); painter.setPen(greenPen);
         painter.drawLine(50, y + 30, width - 50, y + 30); y += 100;
         
@@ -235,18 +276,6 @@ Recyclage::Recyclage(QWidget *parent) : QMainWindow(parent)
         QMessageBox::information(this, "Succès", "Le PDF a été généré avec succès.");
         QDesktopServices::openUrl(QUrl::fromLocalFile(fileName));
     });
-    
-    QPushButton *btnAdd = new QPushButton(" + Ajouter recyclage");
-    btnAdd->setStyleSheet("QPushButton{background:#66BB6A;color:white;font-weight:800;padding:10px 20px;border-radius:6px;} QPushButton:hover{background:#4CAF50;}");
-
-    searchLayout->addWidget(searchID);
-    searchLayout->addWidget(searchCentre);
-    searchLayout->addStretch();
-    searchLayout->addWidget(btnSort);
-    searchLayout->addWidget(btnPdf); 
-    searchLayout->addWidget(btnAdd);
-
-    contentLayout->addLayout(searchLayout);
 
     /* ===== Form Area ===== */
     QFrame *formCard = new QFrame;
@@ -347,30 +376,24 @@ Recyclage::Recyclage(QWidget *parent) : QMainWindow(parent)
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->setShowGrid(false);
     
-    // Table Style match
+    // Table Style match MainWindow
     table->setStyleSheet(
         "QTableWidget { background:white; border-radius:8px; padding:10px; border:none; gridline-color:#ECEFF1; font-family: 'Segoe UI', sans-serif; }"
-        "QHeaderView::section { background:white; color:#212121; padding:10px; font-weight:700; font-size: 13px; border-bottom:2px solid #E0E0E0; border-right: 1px solid #ECEFF1; }"
-        "QTableWidget::item { padding-left:10px; border-bottom:1px solid #F5F5F5; border-right: 1px solid #ECEFF1; color:#37474F; font-weight:600; font-size:12px; }"
-        "QTableWidget::item:selected { background:#E8F5E9; color:#1B5E20; }"
-        // Scrollbar Style
-        "QScrollBar:vertical { border: none; background: #F5F5F5; width: 8px; margin: 0px 0px 0px 0px; border-radius: 4px; }"
-        "QScrollBar::handle:vertical { background: #B0BEC5; min-height: 20px; border-radius: 4px; }"
-        "QScrollBar::add-line:vertical { height: 0px; subcontrol-position: bottom; subcontrol-origin: margin; }"
-        "QScrollBar::sub-line:vertical { height: 0px; subcontrol-position: top; subcontrol-origin: margin; }"
+        "QHeaderView::section { background:#F8F8F8; color:#000000; padding:15px 10px; font-weight:700; font-size: 15px; border-bottom:2px solid #E0E0E0; border-right: 1px solid #ECEFF1; }"
+        "QTableWidget::item { padding:15px 10px; border-bottom:1px solid #F5F5F5; border-right: 1px solid #ECEFF1; color:#000000; font-weight:600; font-size:14px; }"
+        "QTableWidget::item:selected { background:#F0F7ED; color:#000000; }"
+        "QTableWidget::item:alternate { background-color: #FAFAFA; }"
     );
+    table->setAlternatingRowColors(true);
     table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
     contentLayout->addWidget(table);
 
-    /* ================= GLOBAL LAYOUT ================= */
     QHBoxLayout *mainLayout = new QHBoxLayout(central);
     mainLayout->setContentsMargins(0,0,0,0);
     mainLayout->setSpacing(0);
     mainLayout->addWidget(sidebar);
     mainLayout->addWidget(content);
-
-    /* ================= LOGIGUE ================= */
     connect(btnAdd, &QPushButton::clicked, this, [=](){
         idEdit->setFocus();
         viderForm();
@@ -458,7 +481,7 @@ void Recyclage::charger()
 
         int row = table->rowCount();
         table->insertRow(row);
-        table->setColumnWidth(6, 140); // Force wider column for Actions
+        table->setColumnWidth(6, 180); // Sync width with MainWindow Actions column (180px)
 
         table->setItem(row, 0, new QTableWidgetItem(QString::number(data[i].id)));
         table->setItem(row, 1, new QTableWidgetItem(data[i].centre));
@@ -483,7 +506,7 @@ void Recyclage::charger()
         btnSup->setStyleSheet("background:#D32F2F;color:white;border:none;padding:6px 12px;border-radius:6px;font-weight:800;font-size:12px;min-width: 90px;");
         
         // Make sure row is tall enough
-        table->setRowHeight(row, 90);
+        table->setRowHeight(row, 110);
 
         int currentId = data[i].id;
 

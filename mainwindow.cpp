@@ -8,6 +8,12 @@
 #include <QFormLayout>
 #include <QScrollArea>
 #include <QCoreApplication>
+#include <QPdfWriter>
+#include <QPainter>
+#include <QFileDialog>
+#include <QDate>
+#include <QDesktopServices>
+#include <QUrl>
 #include <algorithm>
 
     MainWindow::MainWindow(QWidget *parent)
@@ -66,23 +72,22 @@ void MainWindow::setupLoginScreen()
     QLabel *logoLabel = new QLabel();
     QPixmap logo;
 
-    // Try multiple paths to load the logo
-    if (logo.load(":/magee.png")) {
-        // Loaded from Qt resources
-    } else if (logo.load("magee.png")) {
-        // Loaded from current directory
-    } else if (logo.load("./magee.png")) {
-        // Loaded with explicit current directory
-    } else if (logo.load(QCoreApplication::applicationDirPath() + "/magee.png")) {
-        // Loaded from application directory
+    // Plus de chemins de recherche pour le logo (très robuste)
+    if (logo.load(":/logo.png")) {
+    } else if (logo.load("logo.png")) {
+    } else if (logo.load("./logo.png")) {
+    } else if (logo.load("../logo.png")) { // Cas où l'exe est dans build/Debug
+    } else if (logo.load("../../logo.png")) { // Cas où l'exe est plus profond
+    } else if (logo.load(QCoreApplication::applicationDirPath() + "/logo.png")) {
+    } else if (logo.load(QCoreApplication::applicationDirPath() + "/../logo.png")) {
     }
 
     if (!logo.isNull()) {
-        logoLabel->setPixmap(logo.scaled(100, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-        logoLabel->setStyleSheet("background: transparent;");
+        logoLabel->setPixmap(logo.scaled(180, 180, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        logoLabel->setStyleSheet("background: transparent; border: none;");
     } else {
-        logoLabel->setText("🗑️");
-        logoLabel->setStyleSheet("font-size: 60px; background: transparent;");
+        logoLabel->setText("♻️"); // Emoji recyclage plus pertinent que la corbeille grise
+        logoLabel->setStyleSheet("font-size: 80px; color: #6FA85E; background: transparent;");
     }
     logoLabel->setAlignment(Qt::AlignCenter);
     logoTitleLayout->addWidget(logoLabel);
@@ -158,7 +163,6 @@ void MainWindow::setupLoginScreen()
     connect(loginButton, &QPushButton::clicked, this, &MainWindow::onLoginClicked);
     cardLayout->addWidget(loginButton);
 
-    // Make "Mot de passe oublié" clickable with QPushButton styled as a link
     QPushButton *forgotButton = new QPushButton("Mot de passe oublié ?");
     forgotButton->setStyleSheet(
         "QPushButton { "
@@ -208,23 +212,20 @@ QWidget* MainWindow::createSidebar()
     QLabel *logoLabel = new QLabel();
     QPixmap logo;
 
-    // Try multiple paths to load the logo
-    if (logo.load(":/magee.png")) {
-        // Loaded from Qt resources
-    } else if (logo.load("magee.png")) {
-        // Loaded from current directory
-    } else if (logo.load("./magee.png")) {
-        // Loaded with explicit current directory
-    } else if (logo.load(QCoreApplication::applicationDirPath() + "/magee.png")) {
-        // Loaded from application directory
+    // Chemins de recherche pour la sidebar
+    if (logo.load(":/logo.png")) {
+    } else if (logo.load("logo.png")) {
+    } else if (logo.load("../logo.png")) {
+    } else if (logo.load("../../logo.png")) {
+    } else if (logo.load(QCoreApplication::applicationDirPath() + "/logo.png")) {
     }
 
     if (!logo.isNull()) {
-        logoLabel->setPixmap(logo.scaled(60, 60, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        logoLabel->setPixmap(logo.scaled(80, 80, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         logoLabel->setStyleSheet("background: transparent;");
     } else {
-        logoLabel->setText("🗑️");
-        logoLabel->setStyleSheet("font-size: 40px; background: transparent;");
+        logoLabel->setText("♻️");
+        logoLabel->setStyleSheet("font-size: 50px; color: white; background: transparent;");
     }
     logoLayout->addWidget(logoLabel);
 
@@ -251,10 +252,12 @@ QWidget* MainWindow::createSidebar()
 
     QPushButton *dashboardBtn = new QPushButton("🏠  Tableau de bord");
     dashboardBtn->setStyleSheet(buttonStyle);
+    connect(dashboardBtn, &QPushButton::clicked, [this]() { stackedWidget->setCurrentIndex(1); });
     sidebarLayout->addWidget(dashboardBtn);
 
     QPushButton *usersBtn = new QPushButton("👥  Gestion des utilisateurs");
     usersBtn->setStyleSheet(buttonStyle);
+    connect(usersBtn, &QPushButton::clicked, [this]() { stackedWidget->setCurrentIndex(1); });
     sidebarLayout->addWidget(usersBtn);
 
     QPushButton *trucksBtn = new QPushButton("🚛  Gestion des camions");
@@ -549,6 +552,129 @@ void MainWindow::setupUserManagementScreen()
         "QPushButton:hover { background-color: #8FC65E; }"
         );
     connect(addUserBtn, &QPushButton::clicked, this, &MainWindow::onAddUserClicked);
+
+    QPushButton *btnPdf = new QPushButton("📄 Exporter PDF");
+    btnPdf->setStyleSheet(
+        "QPushButton { "
+        "   background-color: #FF9800; "
+        "   color: #FFFFFF; "
+        "   padding: 10px 25px; "
+        "   border: none; "
+        "   border-radius: 4px; "
+        "   font-weight: bold; "
+        "   font-size: 14px; "
+        "}"
+        "QPushButton:hover { background-color: #F57C00; }"
+    actionLayout->addWidget(btnPdf);
+    actionLayout->addWidget(addUserBtn);
+
+    contentLayout->addWidget(actionWidget);
+
+    connect(btnPdf, &QPushButton::clicked, this, [this](){
+        QString fileName = QFileDialog::getSaveFileName(this, "Exporter les Utilisateurs en PDF", "", "PDF Files (*.pdf)");
+        if (fileName.isEmpty()) return;
+        if (QFileInfo(fileName).suffix().isEmpty()) fileName.append(".pdf");
+
+        QPdfWriter writer(fileName);
+        writer.setPageSize(QPageSize(QPageSize::A4));
+        writer.setResolution(300);
+        writer.setPageMargins(QMarginsF(15, 15, 15, 15));
+
+        QPainter painter(&writer);
+        painter.setRenderHint(QPainter::Antialiasing);
+
+        int width = writer.width();
+        int headerHeight = 350;
+        
+        // Header
+        painter.fillRect(QRect(0, 0, width, headerHeight), QColor("#6FA85E"));
+        painter.setPen(Qt::white);
+        painter.setFont(QFont("Segoe UI", 36, QFont::ExtraBold));
+        painter.drawText(QRect(50, 0, width - 100, headerHeight), Qt::AlignVCenter | Qt::AlignLeft, "TuniWaste");
+        painter.setFont(QFont("Segoe UI", 16, QFont::Bold));
+        painter.drawText(QRect(50, 0, width - 100, headerHeight), Qt::AlignVCenter | Qt::AlignRight, "RAPPORT DE GESTION\nDES UTILISATEURS");
+        
+        int y = headerHeight + 100;
+        
+        // Date
+        painter.setPen(Qt::black);
+        painter.setFont(QFont("Segoe UI", 12));
+        painter.drawText(50, y, "Date du rapport: " + QDate::currentDate().toString("dd/MM/yyyy"));
+        y += 150;
+        
+        // Stats
+        int adminCount = 0;
+        int employeeCount = 0;
+        for(const auto &u : filteredUsers) {
+            if(u.role == "Administrateur") adminCount++;
+            else employeeCount++;
+        }
+        
+        // General Stats Section
+        painter.setPen(QColor("#6FA85E"));
+        painter.setFont(QFont("Segoe UI", 18, QFont::Bold));
+        painter.drawText(50, y, "STATISTIQUES DES COMPTES");
+        QPen greenPen(QColor("#6FA85E")); greenPen.setWidth(3); painter.setPen(greenPen);
+        painter.drawLine(50, y + 30, width - 50, y + 30);
+        y += 100;
+        
+        painter.setPen(Qt::black); painter.setFont(QFont("Segoe UI", 14));
+        painter.drawText(80, y, "• Nombre total d'utilisateurs (filtrés): " + QString::number(filteredUsers.size())); y += 60;
+        painter.drawText(80, y, "• Administrateurs: " + QString::number(adminCount)); y += 60;
+        painter.drawText(80, y, "• Employés: " + QString::number(employeeCount)); y += 150;
+        
+        // Users Table
+        painter.setPen(QColor("#6FA85E")); painter.setFont(QFont("Segoe UI", 18, QFont::Bold));
+        painter.drawText(50, y, "LISTE DES UTILISATEURS"); painter.setPen(greenPen);
+        painter.drawLine(50, y + 30, width - 50, y + 30); y += 100;
+        
+        int tableIndent = 50; 
+        int colID = tableIndent; 
+        int colNom = tableIndent + 300; 
+        int colEmail = tableIndent + 1200; 
+        int colRole = tableIndent + 2200;
+        int rowHeight = 80;
+        
+        // Table Header
+        painter.fillRect(QRect(tableIndent - 20, y - 10, width - (2*tableIndent) + 40, rowHeight), QColor("#F8F8F8"));
+        painter.setPen(Qt::black); painter.setFont(QFont("Segoe UI", 13, QFont::Bold));
+        painter.drawText(colID, y + 55, "ID"); 
+        painter.drawText(colNom, y + 55, "Nom et Prénom"); 
+        painter.drawText(colEmail, y + 55, "Email"); 
+        painter.drawText(colRole, y + 55, "Rôle"); 
+        y += rowHeight;
+        
+        painter.setFont(QFont("Segoe UI", 11)); painter.setPen(Qt::black); 
+        QPen linePen(QColor("#E0E0E0")); linePen.setWidth(1);
+        
+        for(const auto &u : filteredUsers) {
+            // New Page check
+            if (y > writer.height() - 200) {
+                writer.newPage();
+                y = 100;
+            }
+            
+            painter.setPen(Qt::black);
+            painter.drawText(colID, y + 55, QString::number(u.id)); 
+            painter.drawText(colNom, y + 55, u.name); 
+            painter.drawText(colEmail, y + 55, u.email); 
+            painter.drawText(colRole, y + 55, u.role);
+            
+            painter.setPen(linePen);
+            painter.drawLine(tableIndent - 20, y + rowHeight, width - tableIndent + 20, y + rowHeight);
+            y += rowHeight;
+        }
+        
+        // Footer
+        painter.setPen(Qt::gray); painter.setFont(QFont("Segoe UI", 10));
+        painter.drawText(QRect(0, writer.height() - 150, width, 50), Qt::AlignCenter, "TuniWaste - Gestion des Utilisateurs - Document Officiel - " + QDate::currentDate().toString("yyyy"));
+        painter.end();
+        
+        QMessageBox::information(this, "Succès", "Le rapport des utilisateurs a été généré avec succès.");
+        QDesktopServices::openUrl(QUrl::fromLocalFile(fileName));
+    });
+
+    actionLayout->addWidget(btnPdf);
     actionLayout->addWidget(addUserBtn);
 
     contentLayout->addWidget(actionWidget);

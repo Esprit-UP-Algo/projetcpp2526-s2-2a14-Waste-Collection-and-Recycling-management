@@ -71,9 +71,9 @@ void GestionZones::setupUi() {
   btnExportPDF->setIcon(QIcon::fromTheme("application-pdf"));
   // Red PDF Button #E74C3C
   btnExportPDF->setStyleSheet(
-      "QPushButton { background-color: #E74C3C; color: white; border: none; "
+      "QPushButton { background-color: #FFA500; color: white; border: none; "
       "padding: 10px 20px; border-radius: 5px; font-weight: bold; } "
-      "QPushButton:hover { background-color: #C0392B; }");
+      "QPushButton:hover { background-color: #E69500; }");
   connect(btnExportPDF, &QPushButton::clicked, this,
           &GestionZones::onExportPDFClicked);
 

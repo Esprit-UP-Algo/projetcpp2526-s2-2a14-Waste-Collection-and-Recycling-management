@@ -1,5 +1,6 @@
 #include "gestionzones.h"
 
+#include <QComboBox>
 #include <QCoreApplication>
 #include <QDate>
 #include <QDebug>
@@ -8,15 +9,19 @@
 #include <QFileDialog>
 #include <QFrame>
 #include <QGridLayout>
+#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QIcon>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMessageBox>
 #include <QPageSize>
 #include <QPainter>
 #include <QPdfWriter>
 #include <QPixmap>
+#include <QPushButton>
+#include <QTableWidget>
 #include <QUrl>
 #include <QVBoxLayout>
 

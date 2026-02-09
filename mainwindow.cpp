@@ -158,11 +158,12 @@ void MainWindow::createSidebar()
 
     QLabel *logoLabel = new QLabel();
     logoLabel->setFixedSize(80, 80);
-    logoLabel->setStyleSheet("background: white; border-radius: 15px;");
     QPixmap logo("logo.png");
     if (!logo.isNull()) {
+        logo.setMask(logo.createMaskFromColor(Qt::white));
         logoLabel->setPixmap(logo.scaled(80, 80, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
+    logoLabel->setStyleSheet("background: transparent; border: none;");
 
     QLabel *titleLabel = new QLabel("TuniWaste");
     titleLabel->setObjectName("logoTitle");

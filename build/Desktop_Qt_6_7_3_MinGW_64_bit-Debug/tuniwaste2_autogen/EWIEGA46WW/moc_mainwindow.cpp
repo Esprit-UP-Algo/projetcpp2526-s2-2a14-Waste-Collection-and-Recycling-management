@@ -34,73 +34,6 @@ QT_WARNING_DISABLE_GCC("-Wuseless-cast")
 namespace {
 
 #ifdef QT_MOC_HAS_STRINGDATA
-struct qt_meta_stringdata_CLASSTruckDialogENDCLASS_t {};
-constexpr auto qt_meta_stringdata_CLASSTruckDialogENDCLASS = QtMocHelpers::stringData(
-    "TruckDialog"
-);
-#else  // !QT_MOC_HAS_STRINGDATA
-#error "qtmochelpers.h not found or too old."
-#endif // !QT_MOC_HAS_STRINGDATA
-} // unnamed namespace
-
-Q_CONSTINIT static const uint qt_meta_data_CLASSTruckDialogENDCLASS[] = {
-
- // content:
-      12,       // revision
-       0,       // classname
-       0,    0, // classinfo
-       0,    0, // methods
-       0,    0, // properties
-       0,    0, // enums/sets
-       0,    0, // constructors
-       0,       // flags
-       0,       // signalCount
-
-       0        // eod
-};
-
-Q_CONSTINIT const QMetaObject TruckDialog::staticMetaObject = { {
-    QMetaObject::SuperData::link<QDialog::staticMetaObject>(),
-    qt_meta_stringdata_CLASSTruckDialogENDCLASS.offsetsAndSizes,
-    qt_meta_data_CLASSTruckDialogENDCLASS,
-    qt_static_metacall,
-    nullptr,
-    qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSTruckDialogENDCLASS_t,
-        // Q_OBJECT / Q_GADGET
-        QtPrivate::TypeAndForceComplete<TruckDialog, std::true_type>
-    >,
-    nullptr
-} };
-
-void TruckDialog::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
-{
-    (void)_o;
-    (void)_id;
-    (void)_c;
-    (void)_a;
-}
-
-const QMetaObject *TruckDialog::metaObject() const
-{
-    return QObject::d_ptr->metaObject ? QObject::d_ptr->dynamicMetaObject() : &staticMetaObject;
-}
-
-void *TruckDialog::qt_metacast(const char *_clname)
-{
-    if (!_clname) return nullptr;
-    if (!strcmp(_clname, qt_meta_stringdata_CLASSTruckDialogENDCLASS.stringdata0))
-        return static_cast<void*>(this);
-    return QDialog::qt_metacast(_clname);
-}
-
-int TruckDialog::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
-{
-    _id = QDialog::qt_metacall(_c, _id, _a);
-    return _id;
-}
-namespace {
-
-#ifdef QT_MOC_HAS_STRINGDATA
 struct qt_meta_stringdata_CLASSMainWindowENDCLASS_t {};
 constexpr auto qt_meta_stringdata_CLASSMainWindowENDCLASS = QtMocHelpers::stringData(
     "MainWindow",
@@ -113,7 +46,8 @@ constexpr auto qt_meta_stringdata_CLASSMainWindowENDCLASS = QtMocHelpers::string
     "onSearchTextChanged",
     "text",
     "onFilterChanged",
-    "index"
+    "index",
+    "onExportPDF"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -126,7 +60,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-       6,   14, // methods
+       7,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -134,12 +68,13 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    0,   50,    2, 0x08,    1 /* Private */,
-       3,    1,   51,    2, 0x08,    2 /* Private */,
-       5,    1,   54,    2, 0x08,    4 /* Private */,
-       6,    0,   57,    2, 0x08,    6 /* Private */,
-       7,    1,   58,    2, 0x08,    7 /* Private */,
-       9,    1,   61,    2, 0x08,    9 /* Private */,
+       1,    0,   56,    2, 0x08,    1 /* Private */,
+       3,    1,   57,    2, 0x08,    2 /* Private */,
+       5,    1,   60,    2, 0x08,    4 /* Private */,
+       6,    0,   63,    2, 0x08,    6 /* Private */,
+       7,    1,   64,    2, 0x08,    7 /* Private */,
+       9,    1,   67,    2, 0x08,    9 /* Private */,
+      11,    0,   70,    2, 0x08,   11 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -148,6 +83,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
     QMetaType::Void,
     QMetaType::Void, QMetaType::QString,    8,
     QMetaType::Void, QMetaType::Int,   10,
+    QMetaType::Void,
 
        0        // eod
 };
@@ -176,7 +112,9 @@ Q_CONSTINIT const QMetaObject MainWindow::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<const QString &, std::false_type>,
         // method 'onFilterChanged'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        QtPrivate::TypeAndForceComplete<int, std::false_type>
+        QtPrivate::TypeAndForceComplete<int, std::false_type>,
+        // method 'onExportPDF'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>
     >,
     nullptr
 } };
@@ -193,6 +131,7 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 3: _t->onMenuItemClicked(); break;
         case 4: _t->onSearchTextChanged((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
         case 5: _t->onFilterChanged((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 6: _t->onExportPDF(); break;
         default: ;
         }
     }
@@ -217,13 +156,13 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 6)
+        if (_id < 7)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 6;
+        _id -= 7;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 6)
+        if (_id < 7)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 6;
+        _id -= 7;
     }
     return _id;
 }

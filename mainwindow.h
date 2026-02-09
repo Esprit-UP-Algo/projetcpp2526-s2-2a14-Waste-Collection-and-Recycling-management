@@ -9,27 +9,8 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QDialog>
 #include <QSpinBox>
-
-// Dialogue d'ajout/modification intégré
-class TruckDialog : public QDialog
-{
-    Q_OBJECT
-public:
-    TruckDialog(QWidget *parent = nullptr);
-    void setData(const QString &type, int capacity, const QString &status, const QString &location);
-    QString getType() const;
-    int getCapacity() const;
-    QString getStatus() const;
-    QString getLocation() const;
-
-private:
-    QLineEdit *typeInput;
-    QSpinBox *capacityInput;
-    QComboBox *statusCombo;
-    QLineEdit *locationInput;
-};
+#include <QGroupBox>
 
 class MainWindow : public QMainWindow
 {
@@ -46,19 +27,32 @@ private slots:
     void onMenuItemClicked();
     void onSearchTextChanged(const QString &text);
     void onFilterChanged(int index);
+    void onExportPDF();
 
 private:
     // Main widgets
     QWidget *centralWidget;
     QWidget *sidebar;
+    QWidget *formPanel;
     QWidget *mainContent;
 
     // Table
     QTableWidget *truckTable;
 
+    // Form inputs
+    QLineEdit *typeInput;
+    QSpinBox *capacityInput;
+    QComboBox *statusCombo;
+    QLineEdit *locationInput;
+    QPushButton *saveButton;
+    QLabel *formTitleLabel;
+
     // Buttons
-    QPushButton *addButton;
     QVector<QPushButton*> menuButtons;
+    QPushButton *exportPdfButton;
+
+    // Chart
+    QWidget *chartWidget;
 
     // Search and filters
     QLineEdit *searchInput;
@@ -67,16 +61,23 @@ private:
 
     // Data
     int nextId;
+    int currentEditingRow;
 
     // Helper methods
     void setupUI();
     void createSidebar();
+    void createFormPanel();
     void createMainContent();
+    void createChartWidget();
     void loadTruckData();
     void applyStyles();
     void addTableRow(int id, const QString &type, const QString &capacity,
                      const QString &status, const QString &location);
     QString getStatusStyle(const QString &status);
+    void clearFormInputs();
+    void setFormForEditing(int row);
+    void updateChartData();
+    void addStatBar(QVBoxLayout *layout, const QString &label, int count, int total, const QString &color);
 };
 
 #endif // MAINWINDOW_H

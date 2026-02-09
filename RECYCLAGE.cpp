@@ -1,4 +1,4 @@
-#include "recyclage.h"
+#include "RECYCLAGE.h"
 
 #include <QWidget>
 #include <QHBoxLayout>

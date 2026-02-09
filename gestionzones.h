@@ -24,7 +24,6 @@ private slots:
 private:
   // UI Helpers
   void setupUi();
-  void updateTable();
   void addTableRow(int row, QString id, QString nom, QString loc, QString pop,
                    QString surf, QString freq);
   QWidget *createSideBar();

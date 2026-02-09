@@ -1,6 +1,6 @@
 #include "mainwindow.h"
+#include "RECYCLAGE.h"
 #include "gestionzones.h"
-#include "recyclage.h"
 #include <QCoreApplication>
 #include <QDate>
 #include <QDesktopServices>
@@ -16,6 +16,7 @@
 #include <QUrl>
 #include <QVBoxLayout>
 #include <algorithm>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), nextUserId(5), currentSortColumn(-1),

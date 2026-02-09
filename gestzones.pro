@@ -10,10 +10,17 @@ CONFIG += c++17
 
 SOURCES += \
     main.cpp \
-    gestionzones.cpp
+    mainwindow.cpp \
+    gestionzones.cpp \
+    RECYCLAGE.cpp
 
 HEADERS += \
-    gestionzones.h
+    mainwindow.h \
+    gestionzones.h \
+    RECYCLAGE.h
+
+FORMS += \
+    mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

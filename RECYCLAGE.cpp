@@ -28,21 +28,21 @@ Recyclage::Recyclage(QWidget *parent) : QMainWindow(parent)
 {
     QWidget *central = new QWidget(this);
     setCentralWidget(central);
-    central->setStyleSheet("background:#F4F6F8;");
+    central->setStyleSheet("background:#F5F5F5;");
 
     /* ================= SIDEBAR ================= */
     QFrame *sidebar = new QFrame;
-    sidebar->setFixedWidth(260);
+    sidebar->setFixedWidth(343);
     sidebar->setStyleSheet("background:#6FA85E;"); // Matching MainWindow green
 
     QVBoxLayout *side = new QVBoxLayout(sidebar);
-    side->setSpacing(5);
-    side->setContentsMargins(0, 20, 0, 20);
+    side->setSpacing(0);
+    side->setContentsMargins(0, 0, 0, 0);
 
     // Header Container
     QWidget *headerWidget = new QWidget;
     QHBoxLayout *headerLayout = new QHBoxLayout(headerWidget);
-    headerLayout->setContentsMargins(20, 0, 20, 20); // Add padding
+    headerLayout->setContentsMargins(20, 20, 20, 20); // Sync margins
     
     QLabel *logo = new QLabel;
     // Logo setup
@@ -60,13 +60,13 @@ Recyclage::Recyclage(QWidget *parent) : QMainWindow(parent)
         logoPix.setMask(logoPix.createMaskFromColor(Qt::white));
         
         // Scale to small icon size
-        logo->setPixmap(logoPix.scaled(40,40,Qt::KeepAspectRatio,Qt::SmoothTransformation));
+        logo->setPixmap(logoPix.scaled(80,80,Qt::KeepAspectRatio,Qt::SmoothTransformation));
         logo->setStyleSheet("background:transparent; border:none;");
     }
     logo->setAlignment(Qt::AlignCenter);
 
     QLabel *app = new QLabel("TuniWaste");
-    app->setStyleSheet("color:white;font-size:20px;font-weight:800;font-family: 'Segoe UI', sans-serif; background:transparent; border:none;");
+    app->setStyleSheet("color:white;font-size:26px;font-weight:bold;font-family: 'Segoe UI', sans-serif; background:transparent; border:none;");
     
     headerLayout->addWidget(logo);
     headerLayout->addWidget(app);
@@ -192,13 +192,13 @@ Recyclage::Recyclage(QWidget *parent) : QMainWindow(parent)
     
     QPushButton *btnPdf = new QPushButton("📄 Exporter PDF");
     btnPdf->setStyleSheet(
-        "QPushButton { background-color: #FF9800; color: white; font-weight: bold; padding: 10px 20px; border-radius: 6px; border: none; font-size: 14px; }"
+        "QPushButton { background-color: #FF9800; color: white; font-weight: bold; padding: 10px 20px; border-radius: 4px; border: none; font-size: 14px; }"
         "QPushButton:hover { background-color: #F57C00; }"
     );
     
     QPushButton *btnAdd = new QPushButton(" + Ajouter recyclage");
     btnAdd->setStyleSheet(
-        "QPushButton { background-color: #A3D977; color: white; font-weight: bold; padding: 10px 20px; border-radius: 6px; border: none; font-size: 14px; }"
+        "QPushButton { background-color: #A3D977; color: white; font-weight: bold; padding: 10px 20px; border-radius: 4px; border: none; font-size: 14px; }"
         "QPushButton:hover { background-color: #8FC65E; }"
     );
 
@@ -499,7 +499,7 @@ void Recyclage::charger()
 
         int row = table->rowCount();
         table->insertRow(row);
-        table->setColumnWidth(6, 140); // Force wider column for Actions
+        table->setColumnWidth(6, 180); // Sync width with MainWindow Actions column (180px)
 
         table->setItem(row, 0, new QTableWidgetItem(QString::number(data[i].id)));
         table->setItem(row, 1, new QTableWidgetItem(data[i].centre));

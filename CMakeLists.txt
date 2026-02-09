@@ -21,6 +21,8 @@ set(PROJECT_SOURCES
         RECYCLAGE.h
         gestionzones.cpp
         gestionzones.h
+        GestionCamions.cpp
+        GestionCamions.h
         resources.qrc
 )
 

@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "GestionCamions.h"
 #include "RECYCLAGE.h"
 #include "gestionzones.h"
 #include <QCoreApplication>
@@ -33,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
   setupUserManagementScreen();
   setupRecyclingScreen();
   setupZonesScreen();
+  setupTrucksScreen();
 
   stackedWidget->setCurrentIndex(0);
 }
@@ -276,6 +278,7 @@ QWidget *MainWindow::createSidebar() {
 
   QPushButton *trucksBtn = new QPushButton("🚛  Gestion des camions");
   trucksBtn->setStyleSheet(buttonStyle);
+  connect(trucksBtn, &QPushButton::clicked, this, &MainWindow::onTrucksClicked);
   sidebarLayout->addWidget(trucksBtn);
 
   QPushButton *binsBtn = new QPushButton("🗑️  Gestion des poubelles");
@@ -1196,4 +1199,13 @@ void MainWindow::setupZonesScreen() {
 
 void MainWindow::onZonesClicked() {
   contentStackedWidget->setCurrentWidget(zonesWidget);
+}
+
+void MainWindow::setupTrucksScreen() {
+  camionsWidget = new GestionCamions(this);
+  contentStackedWidget->addWidget(camionsWidget);
+}
+
+void MainWindow::onTrucksClicked() {
+  contentStackedWidget->setCurrentWidget(camionsWidget);
 }

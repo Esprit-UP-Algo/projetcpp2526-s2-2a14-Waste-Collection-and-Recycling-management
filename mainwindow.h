@@ -14,6 +14,7 @@
 
 class Recyclage;
 class GestionZones;
+class GestionCamions;
 
 struct User {
   int id;
@@ -72,6 +73,7 @@ private slots:
   void onSortByColumn(int column);
   void onRecycleClicked();
   void onZonesClicked();
+  void onTrucksClicked();
 
 private:
   void setupLoginScreen();
@@ -79,6 +81,7 @@ private:
   void setupUserManagementScreen();
   void setupRecyclingScreen();
   void setupZonesScreen();
+  void setupTrucksScreen();
   void updateUserTable();
   void filterAndSortUsers();
   QWidget *createSidebar();
@@ -95,6 +98,7 @@ private:
   Qt::SortOrder currentSortOrder;
   Recyclage *recyclageWidget;
   GestionZones *zonesWidget;
+  GestionCamions *camionsWidget;
 };
 
 #endif

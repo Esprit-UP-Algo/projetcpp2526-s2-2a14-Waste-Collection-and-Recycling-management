@@ -83,6 +83,7 @@ void MainWindow::setupLoginScreen()
     }
 
     if (!logo.isNull()) {
+        logo.setMask(logo.createMaskFromColor(Qt::white));
         logoLabel->setPixmap(logo.scaled(180, 180, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         logoLabel->setStyleSheet("background: transparent; border: none;");
     } else {
@@ -221,6 +222,7 @@ QWidget* MainWindow::createSidebar()
     }
 
     if (!logo.isNull()) {
+        logo.setMask(logo.createMaskFromColor(Qt::white));
         logoLabel->setPixmap(logo.scaled(80, 80, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         logoLabel->setStyleSheet("background: transparent;");
     } else {
@@ -565,6 +567,7 @@ void MainWindow::setupUserManagementScreen()
         "   font-size: 14px; "
         "}"
         "QPushButton:hover { background-color: #F57C00; }"
+        );
     actionLayout->addWidget(btnPdf);
     actionLayout->addWidget(addUserBtn);
 

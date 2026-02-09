@@ -14,10 +14,13 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets PrintSupport)
 
 set(PROJECT_SOURCES
         main.cpp
+        mainwindow.cpp
+        mainwindow.h
+        mainwindow.ui
         RECYCLAGE.cpp
         RECYCLAGE.h
-
 )
+
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(CR

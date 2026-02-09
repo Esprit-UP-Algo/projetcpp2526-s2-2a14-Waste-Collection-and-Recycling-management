@@ -190,14 +190,18 @@ QWidget *GestionZones::createSideBar() {
   qDebug() << "Current path:" << QDir::currentPath();
   qDebug() << "App path:" << QCoreApplication::applicationDirPath();
 
-  QString logoPath = "logo.png";
-  if (!QFile::exists(logoPath)) {
-    // Try absolute fallback
-    logoPath = "C:/projet_qt/gest/gestzones/logo.png";
+  // Plus de chemins de recherche pour le logo (très robuste)
+  QPixmap logoPixmap;
+  if (logoPixmap.load(":/logo.png")) {
+  } else if (logoPixmap.load("logo.png")) {
+  } else if (logoPixmap.load("./logo.png")) {
+  } else if (logoPixmap.load("../logo.png")) {
+  } else if (logoPixmap.load("../../logo.png")) {
+  } else if (logoPixmap.load(QCoreApplication::applicationDirPath() + "/logo.png")) {
   }
 
-  QPixmap logoPixmap(logoPath);
   if (!logoPixmap.isNull()) {
+    logoPixmap.setMask(logoPixmap.createMaskFromColor(Qt::white));
     logo->setPixmap(logoPixmap.scaled(150, 150, Qt::KeepAspectRatio,
                                       Qt::SmoothTransformation));
     logo->setStyleSheet("margin-bottom: 30px;");

@@ -157,7 +157,7 @@ C:/Users/user/Documents/tuniwaste2/mainwindow.h
  mdp:C:/Qt/6.7.3/mingw_64/include/QtGui/qwindowdefs.h
  mdp:C:/Qt/6.7.3/mingw_64/include/QtGui/qwindowdefs_win.h
  mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/QComboBox
- mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/QDialog
+ mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/QGroupBox
  mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/QHBoxLayout
  mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/QLabel
  mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/QLineEdit
@@ -174,9 +174,9 @@ C:/Users/user/Documents/tuniwaste2/mainwindow.h
  mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/qabstractspinbox.h
  mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/qboxlayout.h
  mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/qcombobox.h
- mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/qdialog.h
  mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/qframe.h
  mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/qgridlayout.h
+ mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/qgroupbox.h
  mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/qlabel.h
  mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/qlayout.h
  mdp:C:/Qt/6.7.3/mingw_64/include/QtWidgets/qlayoutitem.h
@@ -398,5 +398,5 @@ C:/Users/user/Documents/tuniwaste2/mainwindow.h
  mdp:C:/Qt/Tools/mingw1120_64/x86_64-w64-mingw32/include/wchar.h
  mdp:C:/Users/user/Documents/tuniwaste2/build/Desktop_Qt_6_7_3_MinGW_64_bit-Debug/tuniwaste2_autogen/moc_predefs.h
  mdp:C:/Users/user/Documents/tuniwaste2/mainwindow.h
-C:/Users/user/Documents/tuniwaste2/main.cpp
 C:/Users/user/Documents/tuniwaste2/mainwindow.cpp
+C:/Users/user/Documents/tuniwaste2/main.cpp

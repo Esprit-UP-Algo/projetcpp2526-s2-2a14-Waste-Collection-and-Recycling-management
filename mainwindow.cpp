@@ -12,106 +12,20 @@
 #include <QSpinBox>
 #include <QPixmap>
 #include <QMessageBox>
-#include <QDialog>
-
-// ==================== TruckDialog Implementation ====================
-TruckDialog::TruckDialog(QWidget *parent) : QDialog(parent)
-{
-    setWindowTitle("Ajouter un camion");
-    setFixedSize(500, 400);
-
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(20);
-    mainLayout->setContentsMargins(30, 30, 30, 30);
-
-    // Title
-    QLabel *titleLabel = new QLabel("Informations du camion");
-    QFont titleFont = titleLabel->font();
-    titleFont.setPointSize(18);
-    titleFont.setBold(true);
-    titleLabel->setFont(titleFont);
-    mainLayout->addWidget(titleLabel);
-
-    // Form
-    QFormLayout *formLayout = new QFormLayout();
-    formLayout->setSpacing(15);
-    formLayout->setContentsMargins(0, 20, 0, 20);
-
-    typeInput = new QLineEdit();
-    typeInput->setPlaceholderText("Ex: Compact, Grand, Électrique");
-    typeInput->setFixedHeight(40);
-    formLayout->addRow("Type de camion:", typeInput);
-
-    capacityInput = new QSpinBox();
-    capacityInput->setSuffix(" T");
-    capacityInput->setMinimum(1);
-    capacityInput->setMaximum(50);
-    capacityInput->setValue(5);
-    capacityInput->setFixedHeight(40);
-    formLayout->addRow("Capacité:", capacityInput);
-
-    statusCombo = new QComboBox();
-    statusCombo->addItem("Actif");
-    statusCombo->addItem("Maintenance");
-    statusCombo->addItem("En panne");
-    statusCombo->setFixedHeight(40);
-    formLayout->addRow("Statut:", statusCombo);
-
-    locationInput = new QLineEdit();
-    locationInput->setPlaceholderText("Ex: Tunis, Ariana, Sfax");
-    locationInput->setFixedHeight(40);
-    formLayout->addRow("Localisation:", locationInput);
-
-    mainLayout->addLayout(formLayout);
-    mainLayout->addStretch();
-
-    // Buttons
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->setSpacing(15);
-
-    QPushButton *cancelBtn = new QPushButton("Annuler");
-    cancelBtn->setFixedHeight(45);
-    cancelBtn->setCursor(Qt::PointingHandCursor);
-    cancelBtn->setStyleSheet("background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; padding: 0 30px; font-size: 14px;");
-    connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
-
-    QPushButton *saveBtn = new QPushButton("Enregistrer");
-    saveBtn->setFixedHeight(45);
-    saveBtn->setCursor(Qt::PointingHandCursor);
-    saveBtn->setStyleSheet("background: #A3C651; color: white; border: none; border-radius: 8px; padding: 0 30px; font-size: 14px; font-weight: bold;");
-    connect(saveBtn, &QPushButton::clicked, [this]() {
-        if (typeInput->text().isEmpty() || locationInput->text().isEmpty()) {
-            QMessageBox::warning(this, "Erreur", "Veuillez remplir tous les champs");
-            return;
-        }
-        accept();
-    });
-
-    buttonLayout->addStretch();
-    buttonLayout->addWidget(cancelBtn);
-    buttonLayout->addWidget(saveBtn);
-
-    mainLayout->addLayout(buttonLayout);
-
-    setStyleSheet("QDialog { background: white; } QLineEdit, QSpinBox, QComboBox { border: 1px solid #ddd; border-radius: 6px; padding: 8px; } QLabel { color: #333; }");
-}
-
-void TruckDialog::setData(const QString &type, int capacity, const QString &status, const QString &location)
-{
-    typeInput->setText(type);
-    capacityInput->setValue(capacity);
-    statusCombo->setCurrentText(status);
-    locationInput->setText(location);
-}
-
-QString TruckDialog::getType() const { return typeInput->text(); }
-int TruckDialog::getCapacity() const { return capacityInput->value(); }
-QString TruckDialog::getStatus() const { return statusCombo->currentText(); }
-QString TruckDialog::getLocation() const { return locationInput->text(); }
-
+#include <QGroupBox>
+#include <QScrollArea>
+#include <QFileDialog>
+#include <QDateTime>
+#include <QDate>
+#include <QDir>
+#include <QFile>
+#include <QTextStream>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QCoreApplication>
 // ==================== MainWindow Implementation ====================
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), nextId(4)
+    : QMainWindow(parent), nextId(4), currentEditingRow(-1)
 {
     setupUI();
     loadTruckData();
@@ -132,13 +46,15 @@ void MainWindow::setupUI()
     mainLayout->setContentsMargins(0, 0, 0, 0);
 
     createSidebar();
+    createFormPanel();
     createMainContent();
 
     mainLayout->addWidget(sidebar);
+    mainLayout->addWidget(formPanel);
     mainLayout->addWidget(mainContent);
 
     setWindowTitle("TuniWaste - Gestion des camions");
-    resize(1400, 800);
+    resize(1600, 900);
 }
 
 void MainWindow::createSidebar()
@@ -158,10 +74,31 @@ void MainWindow::createSidebar()
 
     QLabel *logoLabel = new QLabel();
     logoLabel->setFixedSize(80, 80);
-    logoLabel->setStyleSheet("background: white; border-radius: 15px;");
-    QPixmap logo("logo.png");
+    logoLabel->setStyleSheet("background: transparent; border-radius: 15px;");
+
+    // Try to load logo from different locations
+    QPixmap logo;
+    QStringList logoPaths = {
+        "logo.png",                    // Current directory
+        "./logo.png",                  // Current directory (explicit)
+        "../logo.png",                 // Parent directory
+        "../../logo.png",              // Two levels up
+        QCoreApplication::applicationDirPath() + "/logo.png"  // Executable directory
+    };
+
+    for (const QString &path : logoPaths) {
+        logo = QPixmap(path);
+        if (!logo.isNull()) {
+            break;  // Logo found, stop searching
+        }
+    }
+
     if (!logo.isNull()) {
         logoLabel->setPixmap(logo.scaled(80, 80, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        logoLabel->setScaledContents(false);
+    } else {
+        // Fallback: colored circle if logo not found
+        logoLabel->setStyleSheet("background: #9BCB4E; border-radius: 40px;");
     }
 
     QLabel *titleLabel = new QLabel("TuniWaste");
@@ -175,13 +112,14 @@ void MainWindow::createSidebar()
 
     // Menu Items
     QStringList menuItems = {
-        "🏠 Tableau de bord",
-        "👤 Gestion des utilisateurs",
+        "📊 Tableau de bord",
+        "👥 Gestion des utilisateurs",
         "🚛 Gestion des camions",
-        "📍 Gestion des routes",
+        "🗑️ Gestion des poubelles",
+        "🏔️ Gestion des zones",
+        "♻️ Gestion de recyclage",
         "📊 Suivi des collectes",
-        "📄 Rapports",
-        "⚙️ Paramètres"
+        "📄 Rapports"
     };
 
     for (int i = 0; i < menuItems.size(); ++i) {
@@ -201,6 +139,15 @@ void MainWindow::createSidebar()
     }
 
     sidebarLayout->addStretch();
+
+    // Paramètres button at bottom
+    QPushButton *settingsBtn = new QPushButton("⚙️ Paramètres");
+    settingsBtn->setObjectName("menuItem");
+    settingsBtn->setCursor(Qt::PointingHandCursor);
+    settingsBtn->setFixedHeight(50);
+    connect(settingsBtn, &QPushButton::clicked, this, &MainWindow::onMenuItemClicked);
+    sidebarLayout->addWidget(settingsBtn);
+
 
     // User Profile
     QWidget *userWidget = new QWidget();
@@ -224,6 +171,103 @@ void MainWindow::createSidebar()
     sidebarLayout->addWidget(userWidget);
 }
 
+void MainWindow::createFormPanel()
+{
+    formPanel = new QWidget();
+    formPanel->setFixedWidth(400);
+    formPanel->setObjectName("formPanel");
+
+    QVBoxLayout *formLayout = new QVBoxLayout(formPanel);
+    formLayout->setContentsMargins(25, 30, 25, 30);
+    formLayout->setSpacing(20);
+
+    // Form Title
+    formTitleLabel = new QLabel("📝 Ajouter un camion");
+    formTitleLabel->setObjectName("formTitle");
+    QFont titleFont = formTitleLabel->font();
+    titleFont.setPointSize(18);
+    titleFont.setBold(true);
+    formTitleLabel->setFont(titleFont);
+    formLayout->addWidget(formTitleLabel);
+
+    // Separator
+    QFrame *separator = new QFrame();
+    separator->setFrameShape(QFrame::HLine);
+    separator->setStyleSheet("background: #ddd; max-height: 1px;");
+    formLayout->addWidget(separator);
+
+    formLayout->addSpacing(10);
+
+    // Form Fields
+    QFormLayout *fieldsLayout = new QFormLayout();
+    fieldsLayout->setSpacing(20);
+    fieldsLayout->setContentsMargins(0, 0, 0, 0);
+    fieldsLayout->setLabelAlignment(Qt::AlignLeft);
+
+    // Type
+    QLabel *typeLabel = new QLabel("Type de camion:");
+    typeLabel->setObjectName("formLabel");
+    typeInput = new QLineEdit();
+    typeInput->setObjectName("formInput");
+    typeInput->setPlaceholderText("Ex: Compact, Grand, Électrique");
+    typeInput->setFixedHeight(45);
+    fieldsLayout->addRow(typeLabel, typeInput);
+
+    // Capacity
+    QLabel *capacityLabel = new QLabel("Capacité:");
+    capacityLabel->setObjectName("formLabel");
+    capacityInput = new QSpinBox();
+    capacityInput->setObjectName("formInput");
+    capacityInput->setSuffix(" T");
+    capacityInput->setMinimum(1);
+    capacityInput->setMaximum(50);
+    capacityInput->setValue(5);
+    capacityInput->setFixedHeight(45);
+    fieldsLayout->addRow(capacityLabel, capacityInput);
+
+    // Status
+    QLabel *statusLabel = new QLabel("Statut:");
+    statusLabel->setObjectName("formLabel");
+    statusCombo = new QComboBox();
+    statusCombo->setObjectName("formInput");
+    statusCombo->addItem("Actif");
+    statusCombo->addItem("Maintenance");
+    statusCombo->addItem("En panne");
+    statusCombo->setFixedHeight(45);
+    fieldsLayout->addRow(statusLabel, statusCombo);
+
+    // Location
+    QLabel *locationLabel = new QLabel("Localisation:");
+    locationLabel->setObjectName("formLabel");
+    locationInput = new QLineEdit();
+    locationInput->setObjectName("formInput");
+    locationInput->setPlaceholderText("Ex: Tunis, Ariana, Sfax");
+    locationInput->setFixedHeight(45);
+    fieldsLayout->addRow(locationLabel, locationInput);
+
+    formLayout->addLayout(fieldsLayout);
+    formLayout->addSpacing(20);
+
+    // Save Button (full width)
+    saveButton = new QPushButton("💾 Enregistrer");
+    saveButton->setObjectName("saveButton");
+    saveButton->setFixedHeight(50);
+    saveButton->setCursor(Qt::PointingHandCursor);
+    connect(saveButton, &QPushButton::clicked, this, &MainWindow::onAddTruck);
+
+    formLayout->addWidget(saveButton);
+    formLayout->addStretch();
+
+    // Info Box
+    QLabel *infoBox = new QLabel(
+        "💡 <b>Astuce:</b><br>"
+        "Cliquez sur 'Modifier' dans le tableau pour éditer un camion existant."
+        );
+    infoBox->setObjectName("infoBox");
+    infoBox->setWordWrap(true);
+    formLayout->addWidget(infoBox);
+}
+
 void MainWindow::createMainContent()
 {
     mainContent = new QWidget();
@@ -244,26 +288,25 @@ void MainWindow::createMainContent()
     QLabel *breadcrumb = new QLabel("Tableau de bord / Gestion des camions");
     breadcrumb->setObjectName("breadcrumb");
 
-    QPushButton *searchBtn = new QPushButton("🔍");
-    searchBtn->setObjectName("headerBtn");
-    searchBtn->setFixedSize(40, 40);
-    searchBtn->setCursor(Qt::PointingHandCursor);
+    QWidget *headerButtonsWidget = new QWidget();
+    QHBoxLayout *headerButtonsLayout = new QHBoxLayout(headerButtonsWidget);
+    headerButtonsLayout->setSpacing(10);
+    headerButtonsLayout->setContentsMargins(0, 0, 0, 0);
 
     QPushButton *notifBtn = new QPushButton("🔔");
     notifBtn->setObjectName("headerBtn");
     notifBtn->setFixedSize(40, 40);
-    notifBtn->setCursor(Qt::PointingHandCursor);
 
     QPushButton *settingsBtn = new QPushButton("⚙️");
     settingsBtn->setObjectName("headerBtn");
     settingsBtn->setFixedSize(40, 40);
-    settingsBtn->setCursor(Qt::PointingHandCursor);
+
+    headerButtonsLayout->addWidget(notifBtn);
+    headerButtonsLayout->addWidget(settingsBtn);
 
     headerLayout->addWidget(breadcrumb);
     headerLayout->addStretch();
-    headerLayout->addWidget(searchBtn);
-    headerLayout->addWidget(notifBtn);
-    headerLayout->addWidget(settingsBtn);
+    headerLayout->addWidget(headerButtonsWidget);
 
     contentLayout->addWidget(headerWidget);
 
@@ -272,133 +315,291 @@ void MainWindow::createMainContent()
     contentWrapper->setObjectName("contentWrapper");
 
     QVBoxLayout *wrapperLayout = new QVBoxLayout(contentWrapper);
-    wrapperLayout->setContentsMargins(30, 30, 30, 30);
-    wrapperLayout->setSpacing(25);
+    wrapperLayout->setContentsMargins(25, 25, 25, 25);
+    wrapperLayout->setSpacing(20);
 
-    // Title and Add Button
-    QWidget *titleWidget = new QWidget();
-    QHBoxLayout *titleLayout = new QHBoxLayout(titleWidget);
-    titleLayout->setContentsMargins(0, 0, 0, 0);
-
-    QLabel *pageTitle = new QLabel("Gestion des camions");
+    // Page Title
+    QHBoxLayout *titleLayout = new QHBoxLayout();
+    QLabel *pageTitle = new QLabel("Liste des camions");
     pageTitle->setObjectName("pageTitle");
-
-    addButton = new QPushButton("+ Ajouter camion");
-    addButton->setObjectName("addButton");
-    addButton->setCursor(Qt::PointingHandCursor);
-    addButton->setFixedHeight(45);
-    connect(addButton, &QPushButton::clicked, this, &MainWindow::onAddTruck);
-
     titleLayout->addWidget(pageTitle);
     titleLayout->addStretch();
-    titleLayout->addWidget(addButton);
 
-    wrapperLayout->addWidget(titleWidget);
+    wrapperLayout->addLayout(titleLayout);
 
-    // Filters
-    QWidget *filterWidget = new QWidget();
-    QHBoxLayout *filterLayout = new QHBoxLayout(filterWidget);
-    filterLayout->setContentsMargins(0, 0, 0, 0);
-    filterLayout->setSpacing(15);
+    // Search and Filters
+    QHBoxLayout *filtersLayout = new QHBoxLayout();
+    filtersLayout->setSpacing(15);
 
     searchInput = new QLineEdit();
-    searchInput->setPlaceholderText("🔍 Rechercher par ID ou type...");
     searchInput->setObjectName("searchInput");
+    searchInput->setPlaceholderText("🔍 Rechercher...");
     searchInput->setFixedHeight(45);
+    searchInput->setMinimumWidth(300);
     connect(searchInput, &QLineEdit::textChanged, this, &MainWindow::onSearchTextChanged);
 
     statusFilter = new QComboBox();
     statusFilter->setObjectName("filterSelect");
-    statusFilter->addItem("⚡ Filtrer par : Statut : Tous les statuts");
+    statusFilter->addItem("Tous les statuts");
     statusFilter->addItem("Actif");
     statusFilter->addItem("Maintenance");
     statusFilter->addItem("En panne");
     statusFilter->setFixedHeight(45);
-    statusFilter->setMinimumWidth(250);
-    statusFilter->setCursor(Qt::PointingHandCursor);
+    statusFilter->setMinimumWidth(180);
     connect(statusFilter, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MainWindow::onFilterChanged);
 
     typeFilter = new QComboBox();
     typeFilter->setObjectName("filterSelect");
-    typeFilter->addItem("Type de camion");
+    typeFilter->addItem("Tous les types");
     typeFilter->addItem("Compact");
     typeFilter->addItem("Grand");
     typeFilter->addItem("Électrique");
     typeFilter->setFixedHeight(45);
-    typeFilter->setMinimumWidth(200);
-    typeFilter->setCursor(Qt::PointingHandCursor);
+    typeFilter->setMinimumWidth(180);
 
-    filterLayout->addWidget(searchInput);
-    filterLayout->addWidget(statusFilter);
-    filterLayout->addWidget(typeFilter);
+    filtersLayout->addWidget(searchInput);
+    filtersLayout->addWidget(statusFilter);
+    filtersLayout->addWidget(typeFilter);
+    filtersLayout->addStretch();
 
-    wrapperLayout->addWidget(filterWidget);
+    wrapperLayout->addLayout(filtersLayout);
 
     // Table
     truckTable = new QTableWidget();
     truckTable->setObjectName("truckTable");
     truckTable->setColumnCount(6);
-    truckTable->setHorizontalHeaderLabels({"ID", "Type camion", "Capacité", "Statut", "Localisation", "Actions"});
+    truckTable->setHorizontalHeaderLabels({"ID", "Type", "Capacité", "Statut", "Localisation", "Actions"});
 
-    truckTable->horizontalHeader()->setStretchLastSection(true);
     truckTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    truckTable->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Fixed);
+    truckTable->setColumnWidth(5, 200);
+
     truckTable->verticalHeader()->setVisible(false);
     truckTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     truckTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     truckTable->setShowGrid(false);
-    truckTable->setMinimumHeight(300);
 
     wrapperLayout->addWidget(truckTable);
 
     // Pagination
-    QWidget *paginationWidget = new QWidget();
-    QHBoxLayout *paginationLayout = new QHBoxLayout(paginationWidget);
-    paginationLayout->setContentsMargins(0, 20, 0, 0);
+    QHBoxLayout *paginationLayout = new QHBoxLayout();
 
-    QLabel *paginationInfo = new QLabel("Affichage de 1 à 3 sur 3 camions");
+    QLabel *paginationInfo = new QLabel("Affichage 1-3 sur 3 résultats");
     paginationInfo->setObjectName("paginationInfo");
 
-    QPushButton *prevBtn = new QPushButton("<");
-    prevBtn->setObjectName("pageButton");
-    prevBtn->setFixedSize(35, 35);
-    prevBtn->setCursor(Qt::PointingHandCursor);
+    QHBoxLayout *pageButtonsLayout = new QHBoxLayout();
+    pageButtonsLayout->setSpacing(8);
 
-    QLabel *currentPage = new QLabel("1");
-    currentPage->setObjectName("pageButton");
-    currentPage->setProperty("active", true);
-    currentPage->setFixedSize(35, 35);
-    currentPage->setAlignment(Qt::AlignCenter);
-
-    QPushButton *nextBtn = new QPushButton(">");
-    nextBtn->setObjectName("pageButton");
-    nextBtn->setFixedSize(35, 35);
-    nextBtn->setCursor(Qt::PointingHandCursor);
+    for (int i = 1; i <= 3; ++i) {
+        QPushButton *pageBtn = new QPushButton(QString::number(i));
+        pageBtn->setObjectName("pageButton");
+        pageBtn->setFixedSize(40, 40);
+        if (i == 1) pageBtn->setProperty("active", true);
+        pageButtonsLayout->addWidget(pageBtn);
+    }
 
     QComboBox *itemsPerPage = new QComboBox();
     itemsPerPage->setObjectName("itemsPerPage");
-    itemsPerPage->addItem("Afficher 10 camions");
-    itemsPerPage->addItem("Afficher 25 camions");
-    itemsPerPage->addItem("Afficher 50 camions");
-    itemsPerPage->setCursor(Qt::PointingHandCursor);
+    itemsPerPage->addItems({"10 par page", "25 par page", "50 par page"});
+    itemsPerPage->setFixedHeight(40);
+
+    // Export PDF Button
+    exportPdfButton = new QPushButton("📄 Exporter PDF");
+    exportPdfButton->setObjectName("exportPdfButton");
+    exportPdfButton->setFixedHeight(40);
+    exportPdfButton->setCursor(Qt::PointingHandCursor);
+    connect(exportPdfButton, &QPushButton::clicked, this, &MainWindow::onExportPDF);
 
     paginationLayout->addWidget(paginationInfo);
     paginationLayout->addStretch();
-    paginationLayout->addWidget(prevBtn);
-    paginationLayout->addWidget(currentPage);
-    paginationLayout->addWidget(nextBtn);
+    paginationLayout->addLayout(pageButtonsLayout);
     paginationLayout->addWidget(itemsPerPage);
+    paginationLayout->addWidget(exportPdfButton);
 
-    wrapperLayout->addWidget(paginationWidget);
+    wrapperLayout->addLayout(paginationLayout);
 
     contentLayout->addWidget(contentWrapper);
+
+    // Add Chart Widget
+    createChartWidget();
+    contentLayout->addWidget(chartWidget);
 }
 
 void MainWindow::loadTruckData()
 {
     addTableRow(1, "Compact", "5 T", "Actif", "Tunis");
-    addTableRow(2, "Grand", "12 T", "Maintenance", "Ariana");
-    addTableRow(3, "Électrique", "8 T", "En panne", "Sfax");
+    addTableRow(2, "Grand", "10 T", "Maintenance", "Ariana");
+    addTableRow(3, "Électrique", "7 T", "En panne", "Sfax");
+    updateChartData();
+}
+
+void MainWindow::createChartWidget()
+{
+    chartWidget = new QWidget();
+    chartWidget->setObjectName("chartWidget");
+    chartWidget->setMinimumHeight(350);
+
+    QVBoxLayout *chartLayout = new QVBoxLayout(chartWidget);
+    chartLayout->setContentsMargins(25, 25, 25, 25);
+    chartLayout->setSpacing(15);
+
+    // Chart Title
+    QLabel *chartTitle = new QLabel("📊 Statistiques des Camions");
+    chartTitle->setObjectName("chartTitle");
+    QFont titleFont = chartTitle->font();
+    titleFont.setPointSize(18);
+    titleFont.setBold(true);
+    chartTitle->setFont(titleFont);
+    chartLayout->addWidget(chartTitle);
+
+    // Charts Container
+    QHBoxLayout *chartsContainer = new QHBoxLayout();
+    chartsContainer->setSpacing(20);
+
+    // Status Chart
+    QWidget *statusChartWidget = new QWidget();
+    statusChartWidget->setObjectName("miniChart");
+    QVBoxLayout *statusChartLayout = new QVBoxLayout(statusChartWidget);
+    statusChartLayout->setContentsMargins(20, 20, 20, 20);
+
+    QLabel *statusChartTitle = new QLabel("Statut des Camions");
+    statusChartTitle->setObjectName("miniChartTitle");
+    statusChartLayout->addWidget(statusChartTitle);
+
+    // Status bars will be added dynamically
+    statusChartLayout->addStretch();
+
+    // Type Chart
+    QWidget *typeChartWidget = new QWidget();
+    typeChartWidget->setObjectName("miniChart");
+    QVBoxLayout *typeChartLayout = new QVBoxLayout(typeChartWidget);
+    typeChartLayout->setContentsMargins(20, 20, 20, 20);
+
+    QLabel *typeChartTitle = new QLabel("Types de Camions");
+    typeChartTitle->setObjectName("miniChartTitle");
+    typeChartLayout->addWidget(typeChartTitle);
+
+    // Type bars will be added dynamically
+    typeChartLayout->addStretch();
+
+    // Capacity Chart
+    QWidget *capacityChartWidget = new QWidget();
+    capacityChartWidget->setObjectName("miniChart");
+    QVBoxLayout *capacityChartLayout = new QVBoxLayout(capacityChartWidget);
+    capacityChartLayout->setContentsMargins(20, 20, 20, 20);
+
+    QLabel *capacityChartTitle = new QLabel("Capacité Totale");
+    capacityChartTitle->setObjectName("miniChartTitle");
+    capacityChartLayout->addWidget(capacityChartTitle);
+
+    QLabel *totalCapacity = new QLabel("22 T");
+    totalCapacity->setObjectName("statValue");
+    QFont statFont = totalCapacity->font();
+    statFont.setPointSize(36);
+    statFont.setBold(true);
+    totalCapacity->setFont(statFont);
+    totalCapacity->setAlignment(Qt::AlignCenter);
+    capacityChartLayout->addWidget(totalCapacity);
+
+    QLabel *capacityLabel = new QLabel("Capacité totale de la flotte");
+    capacityLabel->setObjectName("statLabel");
+    capacityLabel->setAlignment(Qt::AlignCenter);
+    capacityChartLayout->addWidget(capacityLabel);
+
+    capacityChartLayout->addStretch();
+
+    chartsContainer->addWidget(statusChartWidget);
+    chartsContainer->addWidget(typeChartWidget);
+    chartsContainer->addWidget(capacityChartWidget);
+
+    chartLayout->addLayout(chartsContainer);
+}
+
+void MainWindow::updateChartData()
+{
+    // Count statistics
+    int activeCount = 0;
+    int maintenanceCount = 0;
+    int brokenCount = 0;
+    QMap<QString, int> typeCount;
+    int totalCapacity = 0;
+
+    for (int row = 0; row < truckTable->rowCount(); ++row) {
+        // Count status
+        QWidget *statusWidget = truckTable->cellWidget(row, 3);
+        QLabel *statusLabel = qobject_cast<QLabel*>(statusWidget);
+        if (statusLabel) {
+            QString status = statusLabel->text();
+            if (status == "Actif") activeCount++;
+            else if (status == "Maintenance") maintenanceCount++;
+            else if (status == "En panne") brokenCount++;
+        }
+
+        // Count types
+        QString type = truckTable->item(row, 1)->text();
+        typeCount[type]++;
+
+        // Sum capacity
+        QString capacityStr = truckTable->item(row, 2)->text();
+        totalCapacity += capacityStr.remove(" T").toInt();
+    }
+
+    // Update chart widget with current data
+    // This is a simplified version - in a real app you'd update the actual chart bars
+    QWidget *statusChartWidget = chartWidget->findChild<QWidget*>("miniChart");
+    if (statusChartWidget) {
+        QVBoxLayout *layout = qobject_cast<QVBoxLayout*>(statusChartWidget->layout());
+        if (layout) {
+            // Remove old items except title
+            while (layout->count() > 2) {
+                QLayoutItem *item = layout->takeAt(1);
+                delete item->widget();
+                delete item;
+            }
+
+            // Add status bars
+            addStatBar(layout, "Actif", activeCount, truckTable->rowCount(), "#4CAF50");
+            addStatBar(layout, "Maintenance", maintenanceCount, truckTable->rowCount(), "#F5A623");
+            addStatBar(layout, "En panne", brokenCount, truckTable->rowCount(), "#F44336");
+
+            layout->addStretch();
+        }
+    }
+}
+
+void MainWindow::addStatBar(QVBoxLayout *layout, const QString &label, int count, int total, const QString &color)
+{
+    QWidget *barContainer = new QWidget();
+    QVBoxLayout *barLayout = new QVBoxLayout(barContainer);
+    barLayout->setContentsMargins(0, 5, 0, 5);
+    barLayout->setSpacing(5);
+
+    // Label and count
+    QHBoxLayout *labelLayout = new QHBoxLayout();
+    QLabel *nameLabel = new QLabel(label);
+    nameLabel->setObjectName("barLabel");
+    QLabel *countLabel = new QLabel(QString::number(count));
+    countLabel->setObjectName("barCount");
+    labelLayout->addWidget(nameLabel);
+    labelLayout->addStretch();
+    labelLayout->addWidget(countLabel);
+    barLayout->addLayout(labelLayout);
+
+    // Progress bar
+    QWidget *barBackground = new QWidget();
+    barBackground->setFixedHeight(10);
+    barBackground->setStyleSheet("background: #f0f0f0; border-radius: 5px;");
+
+    QWidget *barFill = new QWidget(barBackground);
+    int percentage = total > 0 ? (count * 100 / total) : 0;
+    barFill->setFixedHeight(10);
+    barFill->setFixedWidth(barBackground->width() * percentage / 100);
+    barFill->setStyleSheet(QString("background: %1; border-radius: 5px;").arg(color));
+
+    barLayout->addWidget(barBackground);
+
+    layout->insertWidget(layout->count() - 1, barContainer);
 }
 
 void MainWindow::addTableRow(int id, const QString &type, const QString &capacity,
@@ -410,41 +611,34 @@ void MainWindow::addTableRow(int id, const QString &type, const QString &capacit
     truckTable->setItem(row, 0, new QTableWidgetItem(QString::number(id)));
     truckTable->setItem(row, 1, new QTableWidgetItem(type));
     truckTable->setItem(row, 2, new QTableWidgetItem(capacity));
+    truckTable->setItem(row, 4, new QTableWidgetItem(location));
 
     // Status badge
     QLabel *statusLabel = new QLabel(status);
-    statusLabel->setStyleSheet(getStatusStyle(status));
     statusLabel->setAlignment(Qt::AlignCenter);
+    statusLabel->setStyleSheet(getStatusStyle(status));
     truckTable->setCellWidget(row, 3, statusLabel);
-
-    truckTable->setItem(row, 4, new QTableWidgetItem(location));
 
     // Action buttons
     QWidget *actionWidget = new QWidget();
     QHBoxLayout *actionLayout = new QHBoxLayout(actionWidget);
     actionLayout->setContentsMargins(5, 5, 5, 5);
-    actionLayout->setSpacing(10);
+    actionLayout->setSpacing(8);
 
-    QPushButton *modifyBtn = new QPushButton("✏️ Modifier");
+    QPushButton *modifyBtn = new QPushButton("Modifier");
     modifyBtn->setObjectName("modifyButton");
     modifyBtn->setCursor(Qt::PointingHandCursor);
     modifyBtn->setFixedHeight(35);
-
-    if (status == "En panne") {
-        modifyBtn->setProperty("danger", true);
-        modifyBtn->style()->unpolish(modifyBtn);
-        modifyBtn->style()->polish(modifyBtn);
-    }
-
+    modifyBtn->setMinimumWidth(90);
     connect(modifyBtn, &QPushButton::clicked, [this, row]() {
         onModifyTruck(row);
     });
 
-    QPushButton *deleteBtn = new QPushButton("🗑️ Supprimer");
+    QPushButton *deleteBtn = new QPushButton("Supprimer");
     deleteBtn->setObjectName("deleteButton");
     deleteBtn->setCursor(Qt::PointingHandCursor);
+    deleteBtn->setMinimumWidth(90);
     deleteBtn->setFixedHeight(35);
-
     connect(deleteBtn, &QPushButton::clicked, [this, row]() {
         onDeleteTruck(row);
     });
@@ -460,69 +654,162 @@ void MainWindow::addTableRow(int id, const QString &type, const QString &capacit
 QString MainWindow::getStatusStyle(const QString &status)
 {
     if (status == "Actif") {
-        return "background: #A3C651; color: white; padding: 6px 15px; border-radius: 20px; font-weight: 500;";
+        return "background: #E3F2FD; color: #4DA3FF; padding: 8px 16px; "
+               "border-radius: 20px; font-weight: bold; font-size: 13px;";
     } else if (status == "Maintenance") {
-        return "background: #FDB44B; color: white; padding: 6px 15px; border-radius: 20px; font-weight: 500;";
+        return "background: #FFF3E0; color: #F5A623; padding: 8px 16px; "
+               "border-radius: 20px; font-weight: bold; font-size: 13px;";
     } else if (status == "En panne") {
-        return "background: #B84446; color: white; padding: 6px 15px; border-radius: 20px; font-weight: 500;";
+        return "background: #FFEBEE; color: #E74C3C; padding: 8px 16px; "
+               "border-radius: 20px; font-weight: bold; font-size: 13px;";
     }
     return "";
 }
 
+void MainWindow::clearFormInputs()
+{
+    typeInput->clear();
+    capacityInput->setValue(5);
+    statusCombo->setCurrentIndex(0);
+    locationInput->clear();
+    currentEditingRow = -1;
+    formTitleLabel->setText("📝 Ajouter un camion");
+    saveButton->setText("💾 Enregistrer");
+}
+
+void MainWindow::setFormForEditing(int row)
+{
+    if (row < 0 || row >= truckTable->rowCount()) return;
+
+    currentEditingRow = row;
+    QString id = truckTable->item(row, 0)->text();
+
+    typeInput->setText(truckTable->item(row, 1)->text());
+
+    QString capacityStr = truckTable->item(row, 2)->text();
+    capacityInput->setValue(capacityStr.remove(" T").toInt());
+
+    QWidget *statusWidget = truckTable->cellWidget(row, 3);
+    QLabel *statusLabel = qobject_cast<QLabel*>(statusWidget);
+    if (statusLabel) {
+        statusCombo->setCurrentText(statusLabel->text());
+    }
+
+    locationInput->setText(truckTable->item(row, 4)->text());
+
+    formTitleLabel->setText("✏️ Modifier le camion #" + id);
+    saveButton->setText("💾 Mettre à jour");
+}
+
 void MainWindow::applyStyles()
+// ==================== CHARTE GRAPHIQUE TUNIWASTE ====================
+// Vert principal (branding): #9BCB4E - Boutons primaires, bordures actives, logo
+// Vert sidebar (menu): #7FB069 - Fond du menu latéral
+// Vert hover/accents: #B7D97A - États hover sur éléments verts
+// Vert action (modifier): #2ECC71 - Bouton modifier
+// Bleu (Employé/Actif): #4DA3FF - Badge employé, boutons secondaires
+// Orange (Admin): #F5A623 - Badge administrateur/maintenance
+// Rouge (Supprimer): #E74C3C - Bouton supprimer, actions critiques
+// Fond principal: #F7F7F7 - Pages internes, dashboard
+// Fond recherche: #FFFFFF - Fond input recherche (icône: #9BCB4E)
+// Texte placeholder: #B0B0B0
+// ====================================================================
 {
     QString styleSheet = R"(
         QMainWindow {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #A3C651, stop:1 #1b5e20);
+            background: #F7F7F7;
         }
         #sidebar {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #A3C651, stop:1 #1b5e20);
+            background: #5A8C4A;
         }
         #logoTitle {
-            font-size: 24px;
-            font-weight: bold;
             color: white;
+            font-size: 22px;
+            font-weight: bold;
         }
         #menuItem {
             background: transparent;
             color: white;
             border: none;
             text-align: left;
-            padding-left: 25px;
+            padding-left: 20px;
             font-size: 14px;
+            font-weight: 500;
         }
         #menuItem:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
         }
         #menuItem[active="true"] {
-            background: white;
-            color: #A3C651;
-            font-weight: 600;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-left: 4px solid white;
+            font-weight: bold;
         }
         #userName {
             color: white;
+            font-size: 14px;
+        }
+        #formPanel {
+            background: white;
+            border-right: 1px solid #e0e0e0;
+        }
+        #formTitle {
+            color: #34495e;
+        }
+        #formLabel {
+            color: #000000;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        #formInput {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-size: 14px;
+            background: white;
+            color: #000000;
+        }
+        #formInput:focus {
+            border-color: #9BCB4E;
+        }
+        #saveButton {
+            background: #9BCB4E;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
             font-weight: bold;
-            font-size: 15px;
+        }
+        #saveButton:hover {
+            background: #B7D97A;
+        }
+        #infoBox {
+            background: #E3F2FD;
+            color: #1976D2;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #4DA3FF;
         }
         #mainContent {
-            background: #f5f5f5;
+            background: #F7F7F7;
         }
         #header {
             background: white;
-            border-radius: 15px;
+            border-radius: 12px;
         }
         #breadcrumb {
             color: #666;
             font-size: 13px;
         }
         #headerBtn {
-            background: #f5f5f5;
+            background: #F7F7F7;
             border: none;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 18px;
         }
         #headerBtn:hover {
-            background: #A3C651;
+            background: #9BCB4E;
         }
         #contentWrapper {
             background: white;
@@ -531,25 +818,14 @@ void MainWindow::applyStyles()
         #pageTitle {
             font-size: 26px;
             font-weight: bold;
-            color: #333;
-        }
-        #addButton {
-            background: #A3C651;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 0 25px;
-            font-size: 15px;
-            font-weight: 500;
-        }
-        #addButton:hover {
-            background: #8AB344;
+            color: #000000;
         }
         #searchInput {
             border: 1px solid #ddd;
             border-radius: 10px;
             padding: 0 15px;
             font-size: 14px;
+            color: #000000;
         }
         #filterSelect {
             border: 1px solid #ddd;
@@ -557,15 +833,18 @@ void MainWindow::applyStyles()
             padding: 0 15px;
             font-size: 14px;
             background: white;
+            color: #000000;
         }
         #truckTable {
             background: white;
             border: none;
             gridline-color: #eee;
+            color: #000000;
         }
         #truckTable::item {
             padding: 15px;
             border-bottom: 1px solid #eee;
+            color: #000000;
         }
         #truckTable::item:selected {
             background: #f9f9f9;
@@ -576,38 +855,32 @@ void MainWindow::applyStyles()
             border: none;
             border-bottom: 2px solid #eee;
             font-weight: 600;
-            color: #333;
+            color: #000000;
         }
         #modifyButton {
-            background: #E3F2FD;
-            color: #2196F3;
+            background: #2ECC71;
+            color: white;
             border: none;
             border-radius: 8px;
-            padding: 8px 20px;
+            padding: 6px 20px;
             font-size: 13px;
+            font-weight: 600;
         }
         #modifyButton:hover {
-            background: #2196F3;
-            color: white;
-        }
-        #modifyButton[danger="true"] {
-            background: #FFEBEE;
-            color: #B84446;
-        }
-        #modifyButton[danger="true"]:hover {
-            background: #B84446;
+            background: #27ae60;
             color: white;
         }
         #deleteButton {
-            background: #FFEBEE;
-            color: #B84446;
+            background: #E74C3C;
+            color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             padding: 8px 15px;
+            font-weight: 600;
             font-size: 13px;
         }
         #deleteButton:hover {
-            background: #B84446;
+            background: #c0392b;
             color: white;
         }
         #paginationInfo {
@@ -620,14 +893,14 @@ void MainWindow::applyStyles()
             border-radius: 8px;
         }
         #pageButton:hover {
-            background: #A3C651;
+            background: #9BCB4E;
             color: white;
-            border-color: #A3C651;
+            border-color: #9BCB4E;
         }
         #pageButton[active="true"] {
-            background: #A3C651;
+            background: #9BCB4E;
             color: white;
-            border-color: #A3C651;
+            border-color: #9BCB4E;
             font-weight: bold;
         }
         #itemsPerPage {
@@ -635,6 +908,52 @@ void MainWindow::applyStyles()
             border-radius: 8px;
             padding: 0 10px;
             background: white;
+        }
+        #exportPdfButton {
+            background: #F5A623;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        #exportPdfButton:hover {
+            background: #e59819;
+        }
+        #chartWidget {
+            background: white;
+            border-radius: 15px;
+        }
+        #chartTitle {
+            color: #000000;
+        }
+        #miniChart {
+            background: #f9f9f9;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+        }
+        #miniChartTitle {
+            color: #000000;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        #statValue {
+            color: #9BCB4E;
+        }
+        #statLabel {
+            color: #666;
+            font-size: 13px;
+        }
+        #barLabel {
+            color: #000000;
+            font-size: 13px;
+        }
+        #barCount {
+            color: #000000;
+            font-weight: bold;
+            font-size: 13px;
         }
     )";
 
@@ -644,60 +963,46 @@ void MainWindow::applyStyles()
 // ==================== Slots Implementation ====================
 void MainWindow::onAddTruck()
 {
-    TruckDialog dialog(this);
-    dialog.setWindowTitle("Ajouter un camion");
+    QString type = typeInput->text();
+    QString location = locationInput->text();
 
-    if (dialog.exec() == QDialog::Accepted) {
-        QString type = dialog.getType();
-        int capacity = dialog.getCapacity();
-        QString status = dialog.getStatus();
-        QString location = dialog.getLocation();
+    if (type.isEmpty() || location.isEmpty()) {
+        QMessageBox::warning(this, "Erreur", "Veuillez remplir tous les champs obligatoires");
+        return;
+    }
 
-        QString capacityStr = QString::number(capacity) + " T";
+    int capacity = capacityInput->value();
+    QString status = statusCombo->currentText();
+    QString capacityStr = QString::number(capacity) + " T";
+
+    if (currentEditingRow >= 0) {
+        // Mode édition
+        QString id = truckTable->item(currentEditingRow, 0)->text();
+
+        truckTable->item(currentEditingRow, 1)->setText(type);
+        truckTable->item(currentEditingRow, 2)->setText(capacityStr);
+        truckTable->item(currentEditingRow, 4)->setText(location);
+
+        QLabel *newStatusLabel = new QLabel(status);
+        newStatusLabel->setStyleSheet(getStatusStyle(status));
+        newStatusLabel->setAlignment(Qt::AlignCenter);
+        truckTable->setCellWidget(currentEditingRow, 3, newStatusLabel);
+
+        QMessageBox::information(this, "Succès", "Camion #" + id + " modifié avec succès!");
+        clearFormInputs();
+        updateChartData();
+    } else {
+        // Mode ajout
         addTableRow(nextId++, type, capacityStr, status, location);
-
         QMessageBox::information(this, "Succès", "Camion ajouté avec succès!");
+        clearFormInputs();
+        updateChartData();
     }
 }
 
 void MainWindow::onModifyTruck(int row)
 {
-    if (row < 0 || row >= truckTable->rowCount()) return;
-
-    QString id = truckTable->item(row, 0)->text();
-    QString currentType = truckTable->item(row, 1)->text();
-    QString currentCapacityStr = truckTable->item(row, 2)->text();
-    QString currentLocation = truckTable->item(row, 4)->text();
-
-    int currentCapacity = currentCapacityStr.remove(" T").toInt();
-
-    QWidget *statusWidget = truckTable->cellWidget(row, 3);
-    QLabel *statusLabel = qobject_cast<QLabel*>(statusWidget);  // FIXED: Added pointer *
-    QString currentStatus = statusLabel ? statusLabel->text() : "Actif";
-
-    TruckDialog dialog(this);
-    dialog.setWindowTitle("Modifier le camion #" + id);
-    dialog.setData(currentType, currentCapacity, currentStatus, currentLocation);
-
-    if (dialog.exec() == QDialog::Accepted) {
-        QString type = dialog.getType();
-        int capacity = dialog.getCapacity();
-        QString status = dialog.getStatus();
-        QString location = dialog.getLocation();
-
-        QString capacityStr = QString::number(capacity) + " T";
-
-        truckTable->item(row, 1)->setText(type);
-        truckTable->item(row, 2)->setText(capacityStr);
-        truckTable->item(row, 4)->setText(location);
-
-        QLabel *newStatusLabel = new QLabel(status);
-        newStatusLabel->setStyleSheet(getStatusStyle(status));
-        newStatusLabel->setAlignment(Qt::AlignCenter);
-        truckTable->setCellWidget(row, 3, newStatusLabel);
-
-        QMessageBox::information(this, "Succès", "Camion modifié avec succès!");
-    }
+    setFormForEditing(row);
 }
 
 void MainWindow::onDeleteTruck(int row)
@@ -713,8 +1018,172 @@ void MainWindow::onDeleteTruck(int row)
                                   QMessageBox::Yes | QMessageBox::No);
 
     if (reply == QMessageBox::Yes) {
+        // Si on supprime la ligne qu'on est en train d'éditer, effacer le formulaire
+        if (currentEditingRow == row) {
+            clearFormInputs();
+        }
+
         truckTable->removeRow(row);
+        updateChartData();
         QMessageBox::information(this, "Succès", "Camion supprimé avec succès!");
+    }
+}
+
+void MainWindow::onExportPDF()
+{
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                    "Exporter le Rapport",
+                                                    QDir::homePath() + "/TuniWaste_Camions_" + QDate::currentDate().toString("yyyy-MM-dd") + ".html",
+                                                    "Fichiers HTML (*.html);;Tous les fichiers (*)");
+
+    if (fileName.isEmpty()) {
+        return;
+    }
+
+    if (!fileName.endsWith(".html", Qt::CaseInsensitive)) {
+        fileName += ".html";
+    }
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::critical(this, "Erreur", "Impossible de créer le fichier!");
+        return;
+    }
+
+    QTextStream out(&file);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    out.setCodec("UTF-8");
+#else
+    out.setEncoding(QStringConverter::Utf8);
+#endif
+
+    // Calculate statistics
+    int activeCount = 0;
+    int maintenanceCount = 0;
+    int brokenCount = 0;
+    int totalCapacity = 0;
+
+    for (int row = 0; row < truckTable->rowCount(); ++row) {
+        QWidget *statusWidget = truckTable->cellWidget(row, 3);
+        QLabel *statusLabel = qobject_cast<QLabel*>(statusWidget);
+        if (statusLabel) {
+            QString status = statusLabel->text();
+            if (status == "Actif") activeCount++;
+            else if (status == "Maintenance") maintenanceCount++;
+            else if (status == "En panne") brokenCount++;
+        }
+
+        QString capacityStr = truckTable->item(row, 2)->text();
+        totalCapacity += capacityStr.remove(" T").toInt();
+    }
+
+    // Generate HTML
+    out << "<!DOCTYPE html>\n";
+    out << "<html>\n<head>\n";
+    out << "<meta charset='UTF-8'>\n";
+    out << "<title>TuniWaste - Rapport des Camions</title>\n";
+    out << "<style>\n";
+    out << "body { font-family: Arial, sans-serif; margin: 40px; background: #F7F7F7; }\n";
+    out << ".container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }\n";
+    out << "h1 { color: #34495e; text-align: center; font-size: 36px; margin-bottom: 10px; }\n";
+    out << "h2 { color: #34495e; font-size: 24px; margin-top: 30px; border-bottom: 3px solid #9BCB4E; padding-bottom: 10px; }\n";
+    out << ".subtitle { text-align: center; color: #666; margin-bottom: 10px; }\n";
+    out << ".date { text-align: center; color: #999; font-size: 14px; margin-bottom: 40px; }\n";
+    out << ".stats { display: flex; justify-content: space-around; margin: 30px 0; }\n";
+    out << ".stat-box { flex: 1; margin: 0 10px; padding: 20px; border-radius: 10px; text-align: center; }\n";
+    out << ".stat-box.total { background: #E8F5E9; border: 2px solid #4CAF50; }\n";
+    out << ".stat-box.active { background: #E3F2FD; border: 2px solid #4DA3FF; }\n";
+    out << ".stat-box.capacity { background: #FFF3E0; border: 2px solid #F5A623; }\n";
+    out << ".stat-title { font-size: 14px; color: #666; margin-bottom: 10px; }\n";
+    out << ".stat-value { font-size: 48px; font-weight: bold; margin: 10px 0; }\n";
+    out << ".stat-box.total .stat-value { color: #4CAF50; }\n";
+    out << ".stat-box.active .stat-value { color: #4DA3FF; }\n";
+    out << ".stat-box.capacity .stat-value { color: #F5A623; }\n";
+    out << "table { width: 100%; border-collapse: collapse; margin-top: 20px; }\n";
+    out << "th { background: #34495e; color: white; padding: 15px; text-align: left; font-weight: bold; }\n";
+    out << "td { padding: 12px 15px; border-bottom: 1px solid #eee; }\n";
+    out << "tr:nth-child(even) { background: #f9f9f9; }\n";
+    out << "tr:hover { background: #f0f0f0; }\n";
+    out << ".status { padding: 6px 12px; border-radius: 15px; font-weight: bold; font-size: 12px; display: inline-block; }\n";
+    out << ".status-actif { background: #E8F5E9; color: #4CAF50; }\n";
+    out << ".status-maintenance { background: #FFF3E0; color: #F5A623; }\n";
+    out << ".status-panne { background: #FFEBEE; color: #F44336; }\n";
+    out << ".footer { text-align: center; color: #999; margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; }\n";
+    out << "@media print { body { margin: 0; background: white; } .container { box-shadow: none; } }\n";
+    out << "</style>\n";
+    out << "</head>\n<body>\n";
+    out << "<div class='container'>\n";
+
+    // Header
+    out << "<h1>🌱 TuniWaste</h1>\n";
+    out << "<div class='subtitle'>Rapport de Gestion des Camions</div>\n";
+    out << "<div class='date'>Généré le " << QDateTime::currentDateTime().toString("dd/MM/yyyy à hh:mm") << "</div>\n";
+
+    // Statistics
+    out << "<h2>📊 Statistiques</h2>\n";
+    out << "<div class='stats'>\n";
+    out << "<div class='stat-box total'>\n";
+    out << "<div class='stat-title'>Total Camions</div>\n";
+    out << "<div class='stat-value'>" << truckTable->rowCount() << "</div>\n";
+    out << "</div>\n";
+    out << "<div class='stat-box active'>\n";
+    out << "<div class='stat-title'>Camions Actifs</div>\n";
+    out << "<div class='stat-value'>" << activeCount << "</div>\n";
+    out << "</div>\n";
+    out << "<div class='stat-box capacity'>\n";
+    out << "<div class='stat-title'>Capacité Totale</div>\n";
+    out << "<div class='stat-value'>" << totalCapacity << " T</div>\n";
+    out << "</div>\n";
+    out << "</div>\n";
+
+    // Table
+    out << "<h2>📋 Liste des Camions</h2>\n";
+    out << "<table>\n";
+    out << "<thead>\n<tr>\n";
+    out << "<th>ID</th><th>Type</th><th>Capacité</th><th>Statut</th><th>Localisation</th>\n";
+    out << "</tr>\n</thead>\n<tbody>\n";
+
+    for (int row = 0; row < truckTable->rowCount(); ++row) {
+        out << "<tr>\n";
+        out << "<td>" << truckTable->item(row, 0)->text() << "</td>\n";
+        out << "<td>" << truckTable->item(row, 1)->text() << "</td>\n";
+        out << "<td>" << truckTable->item(row, 2)->text() << "</td>\n";
+
+        QWidget *statusWidget = truckTable->cellWidget(row, 3);
+        QLabel *statusLabel = qobject_cast<QLabel*>(statusWidget);
+        if (statusLabel) {
+            QString status = statusLabel->text();
+            QString statusClass = "status-actif";
+            if (status == "Maintenance") statusClass = "status-maintenance";
+            else if (status == "En panne") statusClass = "status-panne";
+            out << "<td><span class='status " << statusClass << "'>" << status << "</span></td>\n";
+        }
+
+        out << "<td>" << truckTable->item(row, 4)->text() << "</td>\n";
+        out << "</tr>\n";
+    }
+
+    out << "</tbody>\n</table>\n";
+
+    // Footer
+    out << "<div class='footer'>\n";
+    out << "TuniWaste © " << QDate::currentDate().year() << " - Gestion des déchets en Tunisie\n";
+    out << "</div>\n";
+
+    out << "</div>\n</body>\n</html>";
+
+    file.close();
+
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "Succès",
+                                  "Le fichier HTML a été créé avec succès!\n\n"
+                                  "📂 Emplacement: " + fileName + "\n\n"
+                                                   "Voulez-vous l'ouvrir maintenant?\n\n"
+                                                   "💡 Astuce: Vous pouvez l'imprimer en PDF depuis votre navigateur (Ctrl+P → Enregistrer en PDF)",
+                                  QMessageBox::Yes | QMessageBox::No);
+
+    if (reply == QMessageBox::Yes) {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(fileName));
     }
 }
 
@@ -726,7 +1195,7 @@ void MainWindow::onMenuItemClicked()
         btn->style()->polish(btn);
     }
 
-    QPushButton *clickedBtn = qobject_cast<QPushButton*>(sender());  // FIXED: Added pointer *
+    QPushButton *clickedBtn = qobject_cast<QPushButton*>(sender());
     if (clickedBtn) {
         clickedBtn->setProperty("active", true);
         clickedBtn->style()->unpolish(clickedBtn);
@@ -762,7 +1231,7 @@ void MainWindow::onFilterChanged(int index)
 
     for (int row = 0; row < truckTable->rowCount(); ++row) {
         QWidget *statusWidget = truckTable->cellWidget(row, 3);
-        QLabel *statusLabel = qobject_cast<QLabel*>(statusWidget);  // FIXED: Added pointer *
+        QLabel *statusLabel = qobject_cast<QLabel*>(statusWidget);
         QString status = statusLabel ? statusLabel->text() : "";
 
         truckTable->setRowHidden(row, status != selectedStatus);

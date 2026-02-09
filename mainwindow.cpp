@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "RECYCLAGE.h"
+#include "gestionzones.h"
 #include <QCoreApplication>
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -31,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
   setupAppShell();
   setupUserManagementScreen();
   setupRecyclingScreen();
+  setupZonesScreen();
 
   stackedWidget->setCurrentIndex(0);
 }
@@ -282,6 +284,7 @@ QWidget *MainWindow::createSidebar() {
 
   QPushButton *zonesBtn = new QPushButton("📍  Gestion des zones");
   zonesBtn->setStyleSheet(buttonStyle);
+  connect(zonesBtn, &QPushButton::clicked, this, &MainWindow::onZonesClicked);
   sidebarLayout->addWidget(zonesBtn);
 
   QPushButton *recycleBtn = new QPushButton("♻️  Gestion de recyclage");
@@ -1184,4 +1187,13 @@ void MainWindow::setupRecyclingScreen() {
 
 void MainWindow::onRecycleClicked() {
   contentStackedWidget->setCurrentWidget(recyclageWidget);
+}
+
+void MainWindow::setupZonesScreen() {
+  zonesWidget = new GestionZones(this);
+  contentStackedWidget->addWidget(zonesWidget);
+}
+
+void MainWindow::onZonesClicked() {
+  contentStackedWidget->setCurrentWidget(zonesWidget);
 }

@@ -19,6 +19,8 @@ set(PROJECT_SOURCES
         mainwindow.ui
         RECYCLAGE.cpp
         RECYCLAGE.h
+        gestionzones.cpp
+        gestionzones.h
         resources.qrc
 )
 

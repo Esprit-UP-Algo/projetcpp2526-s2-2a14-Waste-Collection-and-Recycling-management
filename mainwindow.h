@@ -13,6 +13,7 @@
 #include <QWidget>
 
 class Recyclage;
+class GestionZones;
 
 struct User {
   int id;
@@ -70,12 +71,14 @@ private slots:
   void onSearchTextChanged(const QString &text);
   void onSortByColumn(int column);
   void onRecycleClicked();
+  void onZonesClicked();
 
 private:
   void setupLoginScreen();
   void setupAppShell();
   void setupUserManagementScreen();
   void setupRecyclingScreen();
+  void setupZonesScreen();
   void updateUserTable();
   void filterAndSortUsers();
   QWidget *createSidebar();
@@ -91,6 +94,7 @@ private:
   int currentSortColumn;
   Qt::SortOrder currentSortOrder;
   Recyclage *recyclageWidget;
+  GestionZones *zonesWidget;
 };
 
 #endif

@@ -369,6 +369,8 @@ QWidget *MainWindow::createSidebar() {
 
   QPushButton *dashboardBtn = new QPushButton("🏠  Tableau de bord");
   dashboardBtn->setStyleSheet(buttonStyle);
+  connect(dashboardBtn, &QPushButton::clicked, this,
+          &MainWindow::onDashboardClicked);
   sidebarLayout->addWidget(dashboardBtn);
 
   QPushButton *usersBtn = new QPushButton("👥  Gestion des utilisateurs");
@@ -1329,7 +1331,8 @@ void MainWindow::onTrucksClicked() {
 
 void MainWindow::setupBinsScreen() {
   poubellesWidget = new GestionPoubelles();
-  contentStackedWidget-&gt;addWidget(poubellesWidget);
+  contentStackedWidget - &gt;
+  addWidget(poubellesWidget);
 }
 
 void MainWindow::onBinsClicked() {

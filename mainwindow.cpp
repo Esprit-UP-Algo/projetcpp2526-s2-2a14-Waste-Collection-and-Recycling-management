@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "GestionCamions.h"
+#include "GestionPoubelles.h"
 #include "RECYCLAGE.h"
 #include "gestionzones.h"
 #include <QCoreApplication>
@@ -43,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
   setupRecyclingScreen();
   setupZonesScreen();
   setupTrucksScreen();
+  setupBinsScreen();
 
   stackedWidget->setCurrentIndex(0);
 }
@@ -271,7 +273,35 @@ void MainWindow::setupAppShell() {
   contentStackedWidget = new QStackedWidget();
   shellLayout->addWidget(contentStackedWidget);
 
-  stackedWidget->addWidget(appShell);
+  // Initialize Modules
+  usersBtn->setProperty("active", true); // Default active
+
+  // existing modules... (we don't see them instantiated here in the original
+  // code, but they are members) modifying setupRecyclingScreen etc. usually
+  // creates the widget and adds it. But wait, setupAppShell in the original
+  // code JUST creates the stack. The other setup functions
+  // (setupRecyclingScreen etc.) are called in constructor. Let's check
+  // constructor.
+
+  // Correction: I should look at where other widgets are added.
+  // setupRecyclingScreen adds recyclageWidget to contentStackedWidget?
+  // Let's check setupRecyclingScreen implementation.
+  // I need to read more lines of mainwindow.cpp to be sure.
+  // But purely based on `setupAppShell` it just creates the stack.
+
+  // Let's check `setupUserManagementScreen`.
+  // It creates `mainWidget` and does
+  // `contentStackedWidget->addWidget(mainWidget);` (Line 707).
+
+  // So I should create `setupBinsScreen()` and call it in constructor.
+  // OR just instantiate it in constructor and add it.
+
+  // New plan:
+  // 1. Add `setupBinsScreen();` call in constructor.
+  // 2. Implement `setupBinsScreen()` which does `poubellesWidget = new
+  // GestionPoubelles(); contentStackedWidget->addWidget(poubellesWidget);`
+
+  // Let's stick to adding `setupBinsScreen()` call in constructor.
 }
 
 QWidget *MainWindow::createSidebar() {
@@ -352,6 +382,7 @@ QWidget *MainWindow::createSidebar() {
 
   QPushButton *binsBtn = new QPushButton("🗑️  Gestion des poubelles");
   binsBtn->setStyleSheet(buttonStyle);
+  connect(binsBtn, &QPushButton::clicked, this, &MainWindow::onBinsClicked);
   sidebarLayout->addWidget(binsBtn);
 
   QPushButton *zonesBtn = new QPushButton("📍  Gestion des zones");
@@ -1293,4 +1324,13 @@ void MainWindow::setupTrucksScreen() {
 
 void MainWindow::onTrucksClicked() {
   contentStackedWidget->setCurrentWidget(camionsWidget);
+}
+
+void MainWindow::setupBinsScreen() {
+  poubellesWidget = new GestionPoubelles();
+  contentStackedWidget-&gt;addWidget(poubellesWidget);
+}
+
+void MainWindow::onBinsClicked() {
+  contentStackedWidget-&gt;setCurrentWidget(poubellesWidget);
 }

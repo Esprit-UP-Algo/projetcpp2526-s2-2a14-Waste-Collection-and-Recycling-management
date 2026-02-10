@@ -23,6 +23,8 @@ set(PROJECT_SOURCES
         gestionzones.h
         GestionCamions.cpp
         GestionCamions.h
+        GestionPoubelles.cpp
+        GestionPoubelles.h
         resources.qrc
 )
 

@@ -1333,14 +1333,14 @@ void MainWindow::setupBinsScreen() {
 }
 
 void MainWindow::onBinsClicked() {
-  contentStackedWidget-&gt;setCurrentWidget(poubellesWidget);
+  contentStackedWidget->setCurrentWidget(poubellesWidget);
 }
 
 void MainWindow::setupDashboardScreen() {
   dashboardWidget = new Dashboard();
-  contentStackedWidget-&gt;addWidget(dashboardWidget);
+  contentStackedWidget->addWidget(dashboardWidget);
 }
 
 void MainWindow::onDashboardClicked() {
-  contentStackedWidget-&gt;setCurrentWidget(dashboardWidget);
+  contentStackedWidget->setCurrentWidget(dashboardWidget);
 }

@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "Dashboard.h"
 #include "GestionCamions.h"
 #include "GestionPoubelles.h"
 #include "RECYCLAGE.h"
@@ -20,6 +21,7 @@
 #include <QUrl>
 #include <QVBoxLayout>
 #include <algorithm>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), nextUserId(5), currentSortColumn(-1),

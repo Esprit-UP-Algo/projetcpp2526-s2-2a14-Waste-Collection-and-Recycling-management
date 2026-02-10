@@ -45,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
   setupZonesScreen();
   setupTrucksScreen();
   setupBinsScreen();
+  setupDashboardScreen();
 
   stackedWidget->setCurrentIndex(0);
 }
@@ -1333,4 +1334,13 @@ void MainWindow::setupBinsScreen() {
 
 void MainWindow::onBinsClicked() {
   contentStackedWidget-&gt;setCurrentWidget(poubellesWidget);
+}
+
+void MainWindow::setupDashboardScreen() {
+  dashboardWidget = new Dashboard();
+  contentStackedWidget-&gt;addWidget(dashboardWidget);
+}
+
+void MainWindow::onDashboardClicked() {
+  contentStackedWidget-&gt;setCurrentWidget(dashboardWidget);
 }

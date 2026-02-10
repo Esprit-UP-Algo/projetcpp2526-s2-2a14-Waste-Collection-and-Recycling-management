@@ -16,6 +16,7 @@ class Recyclage;
 class GestionZones;
 class GestionCamions;
 class GestionPoubelles;
+class Dashboard;
 
 struct User {
   int id;
@@ -76,6 +77,7 @@ private slots:
   void onZonesClicked();
   void onTrucksClicked();
   void onBinsClicked();
+  void onDashboardClicked();
   void onExportUsersPDF();
 
 private:
@@ -86,6 +88,7 @@ private:
   void setupZonesScreen();
   void setupTrucksScreen();
   void setupBinsScreen();
+  void setupDashboardScreen();
   void updateUserTable();
   void filterAndSortUsers();
   QWidget *createSidebar();
@@ -104,6 +107,7 @@ private:
   GestionZones *zonesWidget;
   GestionCamions *camionsWidget;
   GestionPoubelles *poubellesWidget;
+  Dashboard *dashboardWidget;
 };
 
 #endif

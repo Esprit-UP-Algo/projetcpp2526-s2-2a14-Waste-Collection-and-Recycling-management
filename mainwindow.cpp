@@ -22,7 +22,6 @@
 #include <QVBoxLayout>
 #include <algorithm>
 
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), nextUserId(5), currentSortColumn(-1),
       currentSortOrder(Qt::AscendingOrder) {
@@ -277,7 +276,6 @@ void MainWindow::setupAppShell() {
   shellLayout->addWidget(contentStackedWidget);
 
   // Initialize Modules
-  usersBtn->setProperty("active", true); // Default active
 
   // existing modules... (we don't see them instantiated here in the original
   // code, but they are members) modifying setupRecyclingScreen etc. usually
@@ -1333,8 +1331,7 @@ void MainWindow::onTrucksClicked() {
 
 void MainWindow::setupBinsScreen() {
   poubellesWidget = new GestionPoubelles();
-  contentStackedWidget - &gt;
-  addWidget(poubellesWidget);
+  contentStackedWidget->addWidget(poubellesWidget);
 }
 
 void MainWindow::onBinsClicked() {

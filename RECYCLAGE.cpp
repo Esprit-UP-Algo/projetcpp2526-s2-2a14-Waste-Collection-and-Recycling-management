@@ -24,7 +24,6 @@
 #include <QWidget>
 #include <algorithm>
 
-
 Recyclage::Recyclage(QWidget *parent) : QWidget(parent) {
   this->setStyleSheet("background:#F5F5F5;");
 
@@ -509,20 +508,21 @@ void Recyclage::charger() {
 
     QPushButton *btnMod = new QPushButton("Modifier");
     btnMod->setCursor(Qt::PointingHandCursor);
-    btnMod->setStyleSheet(
-        "background:#4CAF50;color:white;border:none;padding:6px "
-        "12px;border-radius:6px;font-weight:800;font-size:12px;min-width: "
-        "90px;");
+    btnMod->setStyleSheet("background: #5CB85C; color: white; border-radius: "
+                          "8px; padding: 5px 10px; font-weight: bold; "
+                          "font-size: 14px;"); // Standard Green
+    btnMod->setFixedHeight(40);
 
     QPushButton *btnSup = new QPushButton("Supprimer");
     btnSup->setCursor(Qt::PointingHandCursor);
-    btnSup->setStyleSheet(
-        "background:#D32F2F;color:white;border:none;padding:6px "
-        "12px;border-radius:6px;font-weight:800;font-size:12px;min-width: "
-        "90px;");
+    btnSup->setStyleSheet("background: #D9534F; color: white; border-radius: "
+                          "8px; padding: 5px 10px; font-weight: bold; "
+                          "font-size: 14px;"); // Standard Red
+    btnSup->setFixedHeight(40);
 
     // Make sure row is tall enough
-    table->setRowHeight(row, 110);
+    // Make sure row is tall enough
+    table->setRowHeight(row, 120);
 
     int currentId = data[i].id;
 

@@ -166,7 +166,12 @@ void GestionZones::setupUi() {
                                          "Population", "Surface", "Fréquence",
                                          "Actions"});
   tableZones->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+  tableZones->horizontalHeader()->setSectionResizeMode(
+      6, QHeaderView::Fixed);         // Set Actions column to fixed width
+  tableZones->setColumnWidth(6, 140); // Larger width for buttons
   tableZones->verticalHeader()->setVisible(false);
+  tableZones->verticalHeader()->setDefaultSectionSize(
+      120); // Add enough height for vertical buttons
   tableZones->setSelectionBehavior(QAbstractItemView::SelectRows);
   tableZones->setEditTriggers(QAbstractItemView::NoEditTriggers);
   tableZones->setStyleSheet(
@@ -322,21 +327,24 @@ void GestionZones::addTableRow(int row, QString id, QString nom, QString loc,
 
   // Action Buttons Widget
   QWidget *actionWidget = new QWidget();
-  QHBoxLayout *actionLayout = new QHBoxLayout(actionWidget);
-  actionLayout->setContentsMargins(5, 2, 5, 2);
+  QVBoxLayout *actionLayout =
+      new QVBoxLayout(actionWidget); // Changed to QVBoxLayout
+  actionLayout->setContentsMargins(5, 5, 5, 5);
   actionLayout->setSpacing(5);
 
   QPushButton *btnEdit = new QPushButton("Modifier");
-  // Vert Action (Modifier): #2ECC71
-  btnEdit->setStyleSheet(
-      "background-color: #2ECC71; color: white; border: none; padding: 5px "
-      "10px; border-radius: 3px; font-weight: bold;");
+  btnEdit->setStyleSheet("background: #FF9800; color: white; border-radius: "
+                         "8px; padding: 5px 10px; font-weight: bold; "
+                         "font-size: 14px;"); // Orange color
+  btnEdit->setFixedHeight(40);
+  btnEdit->setCursor(Qt::PointingHandCursor);
 
   QPushButton *btnDelete = new QPushButton("Supprimer");
-  // Rouge (Supprimer): #E74C3C
-  btnDelete->setStyleSheet(
-      "background-color: #E74C3C; color: white; border: none; padding: 5px "
-      "10px; border-radius: 3px; font-weight: bold;");
+  btnDelete->setStyleSheet("background: #D9534F; color: white; border-radius: "
+                           "8px; padding: 5px 10px; font-weight: bold; "
+                           "font-size: 14px;"); // Red color
+  btnDelete->setFixedHeight(40);
+  btnDelete->setCursor(Qt::PointingHandCursor);
 
   actionLayout->addWidget(btnEdit);
   actionLayout->addWidget(btnDelete);

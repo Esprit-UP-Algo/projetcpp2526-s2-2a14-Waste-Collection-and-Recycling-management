@@ -74,6 +74,7 @@ private slots:
   void onRecycleClicked();
   void onZonesClicked();
   void onTrucksClicked();
+  void onExportUsersPDF();
 
 private:
   void setupLoginScreen();

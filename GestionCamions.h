@@ -12,7 +12,6 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-
 class GestionCamions : public QWidget {
   Q_OBJECT
 
@@ -42,6 +41,8 @@ private:
   void loadTruckData();
 
   // UI Components
+  QWidget *formPanel;
+  QWidget *mainContent;
   QTableWidget *truckTable;
   QLineEdit *typeInput;
   QSpinBox *capacityInput;

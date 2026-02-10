@@ -3,12 +3,20 @@
 #include "RECYCLAGE.h"
 #include "gestionzones.h"
 #include <QCoreApplication>
+#include <QDate>
+#include <QDesktopServices>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
 #include <QMessageBox>
+#include <QPageSize>
+#include <QPainter>
+#include <QPdfWriter>
 #include <QScrollArea>
+#include <QUrl>
 #include <QVBoxLayout>
 #include <algorithm>
 
@@ -37,6 +45,67 @@ MainWindow::MainWindow(QWidget *parent)
   setupTrucksScreen();
 
   stackedWidget->setCurrentIndex(0);
+}
+
+void MainWindow::onExportUsersPDF() {
+  QString fileName = QFileDialog::getSaveFileName(
+      this, "Exporter Utilisateurs en PDF", "", "PDF Files (*.pdf)");
+  if (fileName.isEmpty())
+    return;
+
+  if (QFileInfo(fileName).suffix().isEmpty()) {
+    fileName.append(".pdf");
+  }
+
+  QPdfWriter writer(fileName);
+  writer.setPageSize(QPageSize(QPageSize::A4));
+  writer.setPageMargins(QMarginsF(30, 30, 30, 30));
+
+  QPainter painter(&writer);
+  painter.setPen(Qt::black);
+  painter.setFont(QFont("Arial", 10));
+
+  // Title
+  painter.setFont(QFont("Arial", 20, QFont::Bold));
+  painter.setPen(QColor("#FF9800")); // Orange Title
+  painter.drawText(200, 200, "TuniWaste - Rapport des Utilisateurs");
+
+  painter.setFont(QFont("Arial", 12));
+  painter.setPen(Qt::black);
+  painter.drawText(200, 500, "Date: " + QDate::currentDate().toString());
+
+  int y = 1000;
+
+  // Draw Table Headers
+  painter.setFont(QFont("Arial", 10, QFont::Bold));
+  painter.drawText(200, y, "ID");
+  painter.drawText(1200, y, "Nom");
+  painter.drawText(3500, y, "Email");
+  painter.drawText(6500, y, "Telephone");
+  painter.drawText(8500, y, "Role");
+
+  painter.drawLine(200, y + 100, 9500, y + 100);
+  y += 400;
+
+  // Draw Data
+  painter.setFont(QFont("Arial", 10));
+  for (const User &user : filteredUsers) {
+    painter.drawText(200, y, QString::number(user.id));
+    painter.drawText(1200, y, user.name);
+    painter.drawText(3500, y, user.email);
+    painter.drawText(6500, y, user.phone);
+    painter.drawText(8500, y, user.role);
+
+    y += 300;
+    if (y > 13000) {
+      writer.newPage();
+      y = 500;
+    }
+  }
+
+  painter.end();
+  QMessageBox::information(this, "Succès", "Rapport PDF exporté avec succès !");
+  QDesktopServices::openUrl(QUrl::fromLocalFile(fileName));
 }
 
 MainWindow::~MainWindow() {}
@@ -547,6 +616,22 @@ void MainWindow::setupUserManagementScreen() {
   actionLayout->addWidget(roleFilter);
 
   actionLayout->addStretch();
+
+  QPushButton *exportPdfBtn = new QPushButton("📊 Exporter PDF");
+  exportPdfBtn->setStyleSheet(
+      "QPushButton { "
+      "   background-color: #FF9800; " // Orange
+      "   color: #FFFFFF; "
+      "   padding: 10px 25px; "
+      "   border: none; "
+      "   border-radius: 4px; "
+      "   font-weight: bold; "
+      "   font-size: 14px; "
+      "}"
+      "QPushButton:hover { background-color: #F57C00; }");
+  connect(exportPdfBtn, &QPushButton::clicked, this,
+          &MainWindow::onExportUsersPDF);
+  actionLayout->addWidget(exportPdfBtn);
 
   QPushButton *addUserBtn = new QPushButton("+ Ajouter utilisateur");
   addUserBtn->setStyleSheet("QPushButton { "

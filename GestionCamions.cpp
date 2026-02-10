@@ -19,9 +19,7 @@ GestionCamions::GestionCamions(QWidget *parent)
 
 GestionCamions::~GestionCamions() {}
 
-// Helper widgets for the layout (extracted from original code)
-QWidget *formPanel;
-QWidget *mainContent;
+// Member variables initialized in class
 
 void GestionCamions::setupUI() {
   QHBoxLayout *mainLayout = new QHBoxLayout(this);
@@ -184,7 +182,12 @@ void GestionCamions::createMainContent() {
   truckTable->setHorizontalHeaderLabels(
       {"ID", "Type", "Capacité", "Statut", "Localisation", "Actions"});
   truckTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+  truckTable->horizontalHeader()->setSectionResizeMode(
+      5, QHeaderView::Fixed);         // Set Actions column to fixed width
+  truckTable->setColumnWidth(5, 140); // Larger width for buttons
   truckTable->verticalHeader()->setVisible(false);
+  truckTable->verticalHeader()->setDefaultSectionSize(
+      120); // Add enough height for vertical buttons
   truckTable->setSelectionBehavior(QAbstractItemView::SelectRows);
   truckTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
   truckTable->setShowGrid(false);
@@ -210,8 +213,8 @@ void GestionCamions::applyStyles() {
         #truckTable { background: white; border: none; gridline-color: #eee; color: #000000; }
         #truckTable::item { padding: 15px; border-bottom: 1px solid #eee; color: #000000; }
         QHeaderView::section { background: #f9f9f9; padding: 12px; border: none; border-bottom: 2px solid #eee; font-weight: 600; color: #000000; }
-        #exportPdfButton { background: #E74C3C; color: white; border: none; border-radius: 8px; padding: 0 25px; font-size: 15px; font-weight: bold; }
-        #exportPdfButton:hover { background: #C0392B; }
+        #exportPdfButton { background: #F39C12; color: white; border: none; border-radius: 8px; padding: 0 25px; font-size: 15px; font-weight: bold; }
+        #exportPdfButton:hover { background: #E67E22; }
     )";
   this->setStyleSheet(styleSheet);
 }
@@ -241,19 +244,26 @@ void GestionCamions::addTableRow(int id, const QString &type,
   truckTable->setItem(row, 4, new QTableWidgetItem(location));
 
   QWidget *actionsWidget = new QWidget();
-  QHBoxLayout *actionsLayout = new QHBoxLayout(actionsWidget);
+  QVBoxLayout *actionsLayout =
+      new QVBoxLayout(actionsWidget); // Changed to QVBoxLayout
   actionsLayout->setContentsMargins(5, 5, 5, 5);
-  actionsLayout->setSpacing(10);
+  actionsLayout->setSpacing(5);
 
   QPushButton *editBtn = new QPushButton("Modifier");
-  editBtn->setStyleSheet(
-      "background: #E3F2FD; color: #2196F3; border-radius: 5px; padding: 5px;");
+  editBtn->setStyleSheet("background: #5CB85C; color: white; border-radius: "
+                         "8px; padding: 5px 10px; font-weight: bold; "
+                         "font-size: 14px;"); // Adjusted padding
+  editBtn->setFixedHeight(40);
+  editBtn->setCursor(Qt::PointingHandCursor);
   connect(editBtn, &QPushButton::clicked,
           [this, row]() { onModifyTruck(row); });
 
   QPushButton *deleteBtn = new QPushButton("Supprimer");
-  deleteBtn->setStyleSheet(
-      "background: #FFEBEE; color: #B84446; border-radius: 5px; padding: 5px;");
+  deleteBtn->setStyleSheet("background: #D9534F; color: white; border-radius: "
+                           "8px; padding: 5px 10px; font-weight: bold; "
+                           "font-size: 14px;"); // Adjusted padding
+  deleteBtn->setFixedHeight(40);
+  deleteBtn->setCursor(Qt::PointingHandCursor);
   connect(deleteBtn, &QPushButton::clicked,
           [this, row]() { onDeleteTruck(row); });
 

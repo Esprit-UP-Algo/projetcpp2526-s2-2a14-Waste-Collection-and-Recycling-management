@@ -25,6 +25,8 @@ set(PROJECT_SOURCES
         GestionCamions.h
         GestionPoubelles.cpp
         GestionPoubelles.h
+        Dashboard.cpp
+        Dashboard.h
         resources.qrc
 )
 

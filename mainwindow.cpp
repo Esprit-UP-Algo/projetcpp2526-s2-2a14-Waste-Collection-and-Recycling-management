@@ -185,7 +185,7 @@ void MainWindow::setupLoginScreen() {
                             "#000000; background: transparent;");
   cardLayout->addWidget(emailLabel);
 
-  QLineEdit *emailEdit = new QLineEdit();
+  emailEdit = new QLineEdit();
   emailEdit->setPlaceholderText("nom@example.com");
   emailEdit->setStyleSheet("QLineEdit { "
                            "   padding: 12px; "
@@ -203,7 +203,7 @@ void MainWindow::setupLoginScreen() {
                                "#000000; background: transparent;");
   cardLayout->addWidget(passwordLabel);
 
-  QLineEdit *passwordEdit = new QLineEdit();
+  passwordEdit = new QLineEdit();
   passwordEdit->setPlaceholderText("Password");
   passwordEdit->setEchoMode(QLineEdit::Password);
   passwordEdit->setStyleSheet("QLineEdit { "
@@ -274,6 +274,8 @@ void MainWindow::setupAppShell() {
 
   contentStackedWidget = new QStackedWidget();
   shellLayout->addWidget(contentStackedWidget);
+
+  stackedWidget->addWidget(appShell);
 
   // Initialize Modules
 
@@ -940,7 +942,23 @@ void MainWindow::filterAndSortUsers() {
 }
 
 void MainWindow::onLoginClicked() {
-  stackedWidget->setCurrentIndex(1); // Show app shell
+  QString email = emailEdit->text();
+  QString password = passwordEdit->text();
+
+  if (email.isEmpty() || password.isEmpty()) {
+    QMessageBox::warning(this, "Erreur",
+                         "Veuillez entrer votre email et mot de passe.");
+    return;
+  }
+
+  // Basic validation check (can be expanded later)
+  if (email == "admin" || (email.contains("@") && password.length() >= 4)) {
+    stackedWidget->setCurrentIndex(1); // Show app shell
+    onDashboardClicked();              // Start at dashboard
+  } else {
+    QMessageBox::critical(this, "Acces refuse",
+                          "Identifiants invalides. Veuillez réessayer.");
+  }
 }
 
 void MainWindow::onUsersClicked() {

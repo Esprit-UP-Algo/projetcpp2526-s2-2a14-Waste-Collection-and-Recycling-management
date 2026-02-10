@@ -100,6 +100,8 @@ private:
   QVector<User> filteredUsers;
   int nextUserId;
   QLineEdit *searchEdit;
+  QLineEdit *emailEdit;
+  QLineEdit *passwordEdit;
   QComboBox *roleFilter;
   int currentSortColumn;
   Qt::SortOrder currentSortOrder;

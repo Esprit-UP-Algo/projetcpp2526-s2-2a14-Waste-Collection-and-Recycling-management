@@ -13,14 +13,22 @@
 #include <QFileDialog>
 #include <QDateTime>
 #include <QStandardPaths>
+#include <QGroupBox>
+#include <QSplitter>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), nextUserId(5), currentSortColumn(-1), currentSortOrder(Qt::AscendingOrder)
+    : QMainWindow(parent), nextUserId(5), currentSortColumn(-1),
+    currentSortOrder(Qt::AscendingOrder), editingUserId(-1)
 {
-    users.append({1, "Ahmed Ben Ali", "ahmed.benali@example.com", "+216 98 123 456", "Administrateur"});
-    users.append({2, "Sami Trabelsi", "sami.trabelsi@example.com", "+216 22 456 789", "Employe"});
-    users.append({3, "Ali Haddad", "ali.haddad@example.com", "+216 55 789 123", "Employe"});
-    users.append({4, "Nadia Ayari", "nadia.ayari@example.com", "+216 20 321 654", "Employe"});
+    // Initialize sample users with firstName and lastName
+    users.append({1, "Ahmed", "Ben Ali", "ahmed.benali@example.com", "+216 98 123 456",
+                  "Administrateur", "Homme", "Tunis", "1000", ""});
+    users.append({2, "Sami", "Trabelsi", "sami.trabelsi@example.com", "+216 22 456 789",
+                  "Employe", "Homme", "Sfax", "3000", ""});
+    users.append({3, "Ali", "Haddad", "ali.haddad@example.com", "+216 55 789 123",
+                  "Employe", "Homme", "Sousse", "4000", ""});
+    users.append({4, "Nadia", "Ayari", "nadia.ayari@example.com", "+216 20 321 654",
+                  "Employe", "Femme", "Nabeul", "8000", ""});
 
     filteredUsers = users;
 
@@ -68,17 +76,16 @@ void MainWindow::setupLoginScreen()
     logoTitleLayout->setAlignment(Qt::AlignCenter);
 
     QLabel *logoLabel = new QLabel();
-    QPixmap logo;
+    QPixmap logo("magee.png");
 
-    // Try multiple paths to load the logo
-    if (logo.load(":/magee.png")) {
-        // Loaded from Qt resources
-    } else if (logo.load("magee.png")) {
-        // Loaded from current directory
-    } else if (logo.load("./magee.png")) {
-        // Loaded with explicit current directory
-    } else if (logo.load(QCoreApplication::applicationDirPath() + "/magee.png")) {
-        // Loaded from application directory
+    if (logo.isNull()) {
+        logo.load(":/magee.png");
+        if (logo.isNull()) {
+            logo.load("./magee.png");
+        }
+        if (logo.isNull()) {
+            logo.load(QCoreApplication::applicationDirPath() + "/magee.png");
+        }
     }
 
     if (!logo.isNull()) {
@@ -162,7 +169,6 @@ void MainWindow::setupLoginScreen()
     connect(loginButton, &QPushButton::clicked, this, &MainWindow::onLoginClicked);
     cardLayout->addWidget(loginButton);
 
-    // Make "Mot de passe oublié" clickable with QPushButton styled as a link
     QPushButton *forgotButton = new QPushButton("Mot de passe oublié ?");
     forgotButton->setStyleSheet(
         "QPushButton { "
@@ -194,7 +200,7 @@ void MainWindow::setupLoginScreen()
 QWidget* MainWindow::createSidebar()
 {
     QWidget *sidebar = new QWidget();
-    sidebar->setFixedWidth(343);
+    sidebar->setFixedWidth(250);  // Réduit de 343px à 250px
     sidebar->setStyleSheet("QWidget { background-color: #6FA85E; }");
 
     QVBoxLayout *sidebarLayout = new QVBoxLayout(sidebar);
@@ -204,37 +210,34 @@ QWidget* MainWindow::createSidebar()
     QWidget *logoContainer = new QWidget();
     logoContainer->setStyleSheet("QWidget { background-color: #6FA85E; }");
     QHBoxLayout *logoLayout = new QHBoxLayout(logoContainer);
-    logoLayout->setContentsMargins(20, 20, 20, 20);
-    logoLayout->setSpacing(15);
+    logoLayout->setContentsMargins(15, 15, 15, 15);  // Réduit les marges
+    logoLayout->setSpacing(10);  // Réduit l'espacement
     logoLayout->setAlignment(Qt::AlignLeft);
 
-    // Logo Image
     QLabel *logoLabel = new QLabel();
-    QPixmap logo;
+    QPixmap logo("magee.png");
 
-    // Try multiple paths to load the logo
-    if (logo.load(":/magee.png")) {
-        // Loaded from Qt resources
-    } else if (logo.load("magee.png")) {
-        // Loaded from current directory
-    } else if (logo.load("./magee.png")) {
-        // Loaded with explicit current directory
-    } else if (logo.load(QCoreApplication::applicationDirPath() + "/magee.png")) {
-        // Loaded from application directory
+    if (logo.isNull()) {
+        logo.load(":/magee.png");
+        if (logo.isNull()) {
+            logo.load("./magee.png");
+        }
+        if (logo.isNull()) {
+            logo.load(QCoreApplication::applicationDirPath() + "/magee.png");
+        }
     }
 
     if (!logo.isNull()) {
-        logoLabel->setPixmap(logo.scaled(60, 60, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        logoLabel->setPixmap(logo.scaled(45, 45, Qt::KeepAspectRatio, Qt::SmoothTransformation));  // Réduit de 60 à 45
         logoLabel->setStyleSheet("background: transparent;");
     } else {
         logoLabel->setText("🗑️");
-        logoLabel->setStyleSheet("font-size: 40px; background: transparent;");
+        logoLabel->setStyleSheet("font-size: 35px; background: transparent;");  // Réduit de 40 à 35
     }
     logoLayout->addWidget(logoLabel);
 
-    // App Title
     QLabel *appTitleLabel = new QLabel("TuniWaste");
-    appTitleLabel->setStyleSheet("color: #FFFFFF; font-size: 26px; font-weight: bold; background: transparent;");
+    appTitleLabel->setStyleSheet("color: #FFFFFF; font-size: 20px; font-weight: bold; background: transparent;");  // Réduit de 26 à 20
     appTitleLabel->setAlignment(Qt::AlignVCenter);
     logoLayout->addWidget(appTitleLabel);
 
@@ -247,9 +250,10 @@ QWidget* MainWindow::createSidebar()
         "   background-color: #6FA85E; "
         "   color: #FFFFFF; "
         "   text-align: left; "
-        "   padding: 15px 20px; "
+        "   padding: 14px 15px; "  // Augmenté
         "   border: none; "
-        "   font-size: 15px; "
+        "   font-size: 14px; "  // Augmenté
+        "   margin-bottom: 4px; "  // Espacement entre boutons
         "}"
         "QPushButton:hover { background-color: #7DB86D; }";
 
@@ -257,27 +261,27 @@ QWidget* MainWindow::createSidebar()
     dashboardBtn->setStyleSheet(buttonStyle);
     sidebarLayout->addWidget(dashboardBtn);
 
-    QPushButton *usersBtn = new QPushButton("👥  Gestion des utilisateurs");
+    QPushButton *usersBtn = new QPushButton("👥  Gestion utilisateurs");
     usersBtn->setStyleSheet(buttonStyle);
     sidebarLayout->addWidget(usersBtn);
 
-    QPushButton *trucksBtn = new QPushButton("🚛  Gestion des camions");
+    QPushButton *trucksBtn = new QPushButton("🚛  Gestion camions");
     trucksBtn->setStyleSheet(buttonStyle);
     sidebarLayout->addWidget(trucksBtn);
 
-    QPushButton *binsBtn = new QPushButton("🗑️  Gestion des poubelles");
+    QPushButton *binsBtn = new QPushButton("🗑️  Gestion poubelles");
     binsBtn->setStyleSheet(buttonStyle);
     sidebarLayout->addWidget(binsBtn);
 
-    QPushButton *zonesBtn = new QPushButton("📍  Gestion des zones");
+    QPushButton *zonesBtn = new QPushButton("📍  Gestion zones");
     zonesBtn->setStyleSheet(buttonStyle);
     sidebarLayout->addWidget(zonesBtn);
 
-    QPushButton *recycleBtn = new QPushButton("♻️  Gestion de recyclage");
+    QPushButton *recycleBtn = new QPushButton("♻️  Recyclage");
     recycleBtn->setStyleSheet(buttonStyle);
     sidebarLayout->addWidget(recycleBtn);
 
-    QPushButton *collectBtn = new QPushButton("📋  Suivi des collectes");
+    QPushButton *collectBtn = new QPushButton("📋  Suivi collectes");
     collectBtn->setStyleSheet(buttonStyle);
     sidebarLayout->addWidget(collectBtn);
 
@@ -340,7 +344,7 @@ void MainWindow::setupUserManagementScreen()
 
     topLayout->addWidget(titleWidget);
 
-    QLabel *pathLabel = new QLabel("Tableau de bord / Tableau - bord / Gestion des utilisateurs");
+    QLabel *pathLabel = new QLabel("Tableau de bord / Gestion des utilisateurs");
     pathLabel->setStyleSheet("font-size: 13px; color: #999999; background: transparent;");
     topLayout->addWidget(pathLabel);
 
@@ -352,7 +356,257 @@ void MainWindow::setupUserManagementScreen()
         );
     contentLayout->addWidget(pageTitle);
 
-    // Search and Filter Section - Enhanced
+    // ===========================================
+    // NEW LAYOUT: FORM ON LEFT, TABLE ON RIGHT
+    // ===========================================
+
+    QSplitter *splitter = new QSplitter(Qt::Horizontal);
+    splitter->setHandleWidth(10);
+    splitter->setStyleSheet(
+        "QSplitter::handle { "
+        "   background-color: #DDDDDD; "
+        "   margin: 2px; "
+        "}"
+        );
+
+    // ===========================================
+    // LEFT SIDE: FORM
+    // ===========================================
+    QGroupBox *formGroupBox = new QGroupBox("Formulaire Utilisateur");
+    formGroupBox->setMinimumWidth(350);  // Réduit de 380
+    formGroupBox->setMaximumWidth(450);  // Réduit de 480
+    formGroupBox->setStyleSheet(
+        "QGroupBox { "
+        "   background-color: #FFFFFF; "
+        "   border: 2px solid #6FA85E; "
+        "   border-radius: 8px; "
+        "   margin-top: 10px; "
+        "   padding: 15px; "
+        "   font-size: 16px; "
+        "   font-weight: bold; "
+        "   color: #6FA85E; "
+        "}"
+        "QGroupBox::title { "
+        "   subcontrol-origin: margin; "
+        "   subcontrol-position: top left; "
+        "   padding: 5px 10px; "
+        "   background-color: #FFFFFF; "
+        "}"
+        );
+
+    QVBoxLayout *formGroupLayout = new QVBoxLayout(formGroupBox);
+    formGroupLayout->setSpacing(10);  // Réduit de 15 à 10
+    formGroupLayout->setContentsMargins(10, 10, 10, 10);  // Réduit les marges
+
+    // Photo section at top
+    QHBoxLayout *photoTopLayout = new QHBoxLayout();
+    photoTopLayout->setAlignment(Qt::AlignCenter);
+
+    formPhotoLabel = new QLabel();
+    formPhotoLabel->setFixedSize(80, 80);  // Réduit de 100 à 80
+    formPhotoLabel->setStyleSheet(
+        "QLabel { "
+        "   border: 2px solid #DDDDDD; "
+        "   border-radius: 40px; "  // Réduit de 50 à 40
+        "   background-color: #F5F5F5; "
+        "   font-size: 35px; "  // Réduit de 45 à 35
+        "}"
+        );
+    formPhotoLabel->setAlignment(Qt::AlignCenter);
+    formPhotoLabel->setText("👤");
+    photoTopLayout->addWidget(formPhotoLabel);
+
+    formGroupLayout->addLayout(photoTopLayout);
+
+    QPushButton *browsePhotoBtn = new QPushButton("📷 Photo");
+    browsePhotoBtn->setStyleSheet(
+        "QPushButton { "
+        "   background-color: #6FA85E; "
+        "   color: #FFFFFF; "
+        "   padding: 6px 12px; "  // Réduit
+        "   border: none; "
+        "   border-radius: 5px; "
+        "   font-weight: bold; "
+        "   font-size: 12px; "
+        "}"
+        "QPushButton:hover { background-color: #5A8F47; }"
+        );
+    browsePhotoBtn->setCursor(Qt::PointingHandCursor);
+    connect(browsePhotoBtn, &QPushButton::clicked, this, &MainWindow::onBrowsePhotoClicked);
+    formGroupLayout->addWidget(browsePhotoBtn);
+
+    formGroupLayout->addSpacing(5);  // Réduit de 10 à 5
+
+    // Form fields - vertical layout
+    QFormLayout *formFieldsLayout = new QFormLayout();
+    formFieldsLayout->setSpacing(8);  // Réduit de 12 à 8
+    formFieldsLayout->setLabelAlignment(Qt::AlignRight);
+
+    QString labelStyle = "font-size: 12px; font-weight: bold; color: #000000; background: transparent;";
+    QString lineEditStyle =
+        "QLineEdit { "
+        "   padding: 6px; "  // Réduit de 8px à 6px
+        "   border: 2px solid #CCCCCC; "
+        "   border-radius: 5px; "
+        "   background-color: #FFFFFF; "
+        "   color: #000000; "
+        "   font-size: 12px; "  // Réduit de 13px à 12px
+        "}"
+        "QLineEdit:focus { border: 2px solid #6FA85E; }";
+    QString comboStyle =
+        "QComboBox { "
+        "   padding: 6px; "  // Réduit de 8px à 6px
+        "   border: 2px solid #CCCCCC; "
+        "   border-radius: 5px; "
+        "   background-color: #FFFFFF; "
+        "   color: #000000; "
+        "   font-size: 12px; "  // Réduit de 13px à 12px
+        "   font-weight: normal; "
+        "}"
+        "QComboBox:focus { "
+        "   border: 2px solid #6FA85E; "
+        "}"
+        "QComboBox::drop-down { "
+        "   border: none; "
+        "   width: 30px; "
+        "}"
+        "QComboBox::down-arrow { "
+        "   image: none; "
+        "   border-left: 5px solid transparent; "
+        "   border-right: 5px solid transparent; "
+        "   border-top: 5px solid #666666; "
+        "   width: 0; "
+        "   height: 0; "
+        "}"
+        "QComboBox QAbstractItemView { "
+        "   background-color: #FFFFFF; "
+        "   color: #000000; "
+        "   selection-background-color: #6FA85E; "
+        "   selection-color: #FFFFFF; "
+        "   border: 1px solid #CCCCCC; "
+        "   padding: 5px; "
+        "}";
+
+    // Prénom
+    QLabel *firstNameLabel = new QLabel("Prénom:");
+    firstNameLabel->setStyleSheet(labelStyle);
+    formFirstNameEdit = new QLineEdit();
+    formFirstNameEdit->setPlaceholderText("Prénom");
+    formFirstNameEdit->setStyleSheet(lineEditStyle);
+    formFieldsLayout->addRow(firstNameLabel, formFirstNameEdit);
+
+    // Nom
+    QLabel *lastNameLabel = new QLabel("Nom:");
+    lastNameLabel->setStyleSheet(labelStyle);
+    formLastNameEdit = new QLineEdit();
+    formLastNameEdit->setPlaceholderText("Nom de famille");
+    formLastNameEdit->setStyleSheet(lineEditStyle);
+    formFieldsLayout->addRow(lastNameLabel, formLastNameEdit);
+
+    // Email
+    QLabel *emailLabel = new QLabel("Email:");
+    emailLabel->setStyleSheet(labelStyle);
+    formEmailEdit = new QLineEdit();
+    formEmailEdit->setPlaceholderText("nom@example.com");
+    formEmailEdit->setStyleSheet(lineEditStyle);
+    formFieldsLayout->addRow(emailLabel, formEmailEdit);
+
+    // Téléphone
+    QLabel *phoneLabel = new QLabel("Téléphone:");
+    phoneLabel->setStyleSheet(labelStyle);
+    formPhoneEdit = new QLineEdit();
+    formPhoneEdit->setPlaceholderText("+216 XX XXX XXX");
+    formPhoneEdit->setStyleSheet(lineEditStyle);
+    formFieldsLayout->addRow(phoneLabel, formPhoneEdit);
+
+    // Sexe
+    QLabel *genderLabel = new QLabel("Sexe:");
+    genderLabel->setStyleSheet(labelStyle);
+    formGenderCombo = new QComboBox();
+    formGenderCombo->addItem("Homme");
+    formGenderCombo->addItem("Femme");
+    formGenderCombo->setStyleSheet(comboStyle);
+    formFieldsLayout->addRow(genderLabel, formGenderCombo);
+
+    // Ville
+    QLabel *cityLabel = new QLabel("Ville:");
+    cityLabel->setStyleSheet(labelStyle);
+    formCityEdit = new QLineEdit();
+    formCityEdit->setPlaceholderText("Ville");
+    formCityEdit->setStyleSheet(lineEditStyle);
+    formFieldsLayout->addRow(cityLabel, formCityEdit);
+
+    // Code Postal
+    QLabel *postalCodeLabel = new QLabel("Code Postal:");
+    postalCodeLabel->setStyleSheet(labelStyle);
+    formPostalCodeEdit = new QLineEdit();
+    formPostalCodeEdit->setPlaceholderText("1000");
+    formPostalCodeEdit->setStyleSheet(lineEditStyle);
+    formFieldsLayout->addRow(postalCodeLabel, formPostalCodeEdit);
+
+    // Rôle
+    QLabel *roleLabel = new QLabel("Rôle:");
+    roleLabel->setStyleSheet(labelStyle);
+    formRoleCombo = new QComboBox();
+    formRoleCombo->addItem("Administrateur");
+    formRoleCombo->addItem("Employe");
+    formRoleCombo->setStyleSheet(comboStyle);
+    formFieldsLayout->addRow(roleLabel, formRoleCombo);
+
+    formGroupLayout->addLayout(formFieldsLayout);
+
+    formGroupLayout->addSpacing(10);
+
+    // Buttons
+    QHBoxLayout *formButtonsLayout = new QHBoxLayout();
+    formButtonsLayout->setSpacing(10);
+
+    QPushButton *clearBtn = new QPushButton("🔄 Nouveau");
+    clearBtn->setStyleSheet(
+        "QPushButton { "
+        "   background-color: #999999; "
+        "   color: #FFFFFF; "
+        "   padding: 10px 20px; "
+        "   border: none; "
+        "   border-radius: 5px; "
+        "   font-weight: bold; "
+        "   font-size: 14px; "
+        "}"
+        "QPushButton:hover { background-color: #777777; }"
+        );
+    clearBtn->setCursor(Qt::PointingHandCursor);
+    connect(clearBtn, &QPushButton::clicked, this, &MainWindow::onClearFormClicked);
+    formButtonsLayout->addWidget(clearBtn);
+
+    QPushButton *saveBtn = new QPushButton("💾 Enregistrer");
+    saveBtn->setStyleSheet(
+        "QPushButton { "
+        "   background-color: #A3D977; "
+        "   color: #FFFFFF; "
+        "   padding: 10px 20px; "
+        "   border: none; "
+        "   border-radius: 5px; "
+        "   font-weight: bold; "
+        "   font-size: 14px; "
+        "}"
+        "QPushButton:hover { background-color: #8FC65E; }"
+        );
+    saveBtn->setCursor(Qt::PointingHandCursor);
+    connect(saveBtn, &QPushButton::clicked, this, &MainWindow::onSaveUserClicked);
+    formButtonsLayout->addWidget(saveBtn);
+
+    formGroupLayout->addLayout(formButtonsLayout);
+
+    // ===========================================
+    // RIGHT SIDE: TABLE WITH FILTERS
+    // ===========================================
+    QWidget *tableWidget = new QWidget();
+    tableWidget->setStyleSheet("QWidget { background-color: transparent; }");
+    QVBoxLayout *tableLayout = new QVBoxLayout(tableWidget);
+    tableLayout->setContentsMargins(0, 0, 0, 0);
+    tableLayout->setSpacing(15);
+
+    // Search and Filter Section
     QWidget *searchFilterWidget = new QWidget();
     searchFilterWidget->setStyleSheet(
         "QWidget { "
@@ -365,30 +619,10 @@ void MainWindow::setupUserManagementScreen()
     QHBoxLayout *searchFilterLayout = new QHBoxLayout(searchFilterWidget);
     searchFilterLayout->setSpacing(15);
 
-    // Search by ID
-    QLineEdit *searchIdEdit = new QLineEdit();
-    searchIdEdit->setPlaceholderText("🔍 Rechercher par ID...");
-    searchIdEdit->setFixedWidth(180);
-    searchIdEdit->setStyleSheet(
-        "QLineEdit { "
-        "   padding: 10px 15px; "
-        "   border: 2px solid #DDDDDD; "
-        "   border-radius: 6px; "
-        "   background-color: #FFFFFF; "
-        "   color: #000000; "
-        "   font-size: 14px; "
-        "}"
-        "QLineEdit:focus { border: 2px solid #6FA85E; }"
-        );
-    connect(searchIdEdit, &QLineEdit::textChanged, [this](const QString &text) {
-        searchEdit->setText(text);
-    });
-    searchFilterLayout->addWidget(searchIdEdit);
-
     // Search by Name
     QLineEdit *searchNameEdit = new QLineEdit();
-    searchNameEdit->setPlaceholderText("🔍 Rechercher par Nom...");
-    searchNameEdit->setFixedWidth(200);
+    searchNameEdit->setPlaceholderText("🔍 Rechercher (nom, email, ville...)");
+    searchNameEdit->setFixedWidth(250);
     searchNameEdit->setStyleSheet(
         "QLineEdit { "
         "   padding: 10px 15px; "
@@ -400,65 +634,44 @@ void MainWindow::setupUserManagementScreen()
         "}"
         "QLineEdit:focus { border: 2px solid #6FA85E; }"
         );
-    connect(searchNameEdit, &QLineEdit::textChanged, [this](const QString &text) {
-        searchEdit->setText(text);
-    });
     searchFilterLayout->addWidget(searchNameEdit);
-
-    // Search by Email
-    QLineEdit *searchEmailEdit = new QLineEdit();
-    searchEmailEdit->setPlaceholderText("🔍 Rechercher par Email...");
-    searchEmailEdit->setFixedWidth(220);
-    searchEmailEdit->setStyleSheet(
-        "QLineEdit { "
-        "   padding: 10px 15px; "
-        "   border: 2px solid #DDDDDD; "
-        "   border-radius: 6px; "
-        "   background-color: #FFFFFF; "
-        "   color: #000000; "
-        "   font-size: 14px; "
-        "}"
-        "QLineEdit:focus { border: 2px solid #6FA85E; }"
-        );
-    connect(searchEmailEdit, &QLineEdit::textChanged, [this](const QString &text) {
-        searchEdit->setText(text);
-    });
-    searchFilterLayout->addWidget(searchEmailEdit);
 
     searchFilterLayout->addStretch();
 
-    // Sort Options
-    QLabel *sortLabel = new QLabel("Trier par:");
-    sortLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #000000; background: transparent;");
+    // Sort by dropdown
+    QLabel *sortLabel = new QLabel("Trier:");
+    sortLabel->setStyleSheet("font-size: 13px; font-weight: bold; color: #000000; background: transparent;");
     searchFilterLayout->addWidget(sortLabel);
 
     QComboBox *sortCombo = new QComboBox();
     sortCombo->addItem("Plus récent (ID ↓)");
     sortCombo->addItem("Plus ancien (ID ↑)");
     sortCombo->addItem("Nom (A-Z)");
-    sortCombo->addItem("Nom (Z-A)");
     sortCombo->addItem("Email (A-Z)");
-    sortCombo->addItem("Email (Z-A)");
-    sortCombo->setFixedWidth(200);
+    sortCombo->setFixedWidth(180);
     sortCombo->setStyleSheet(
         "QComboBox { "
         "   padding: 10px 15px; "
-        "   border: 2px solid #DDDDDD; "
-        "   border-radius: 6px; "
+        "   border: 1px solid #DDDDDD; "
+        "   border-radius: 4px; "
         "   background-color: #FFFFFF; "
         "   color: #000000; "
-        "   font-size: 14px; "
+        "   font-size: 13px; "
         "   font-weight: bold; "
         "}"
-        "QComboBox:focus { border: 2px solid #6FA85E; }"
         "QComboBox::drop-down { border: none; width: 30px; }"
+        "QComboBox::down-arrow { "
+        "   image: none; "
+        "   border-left: 5px solid transparent; "
+        "   border-right: 5px solid transparent; "
+        "   border-top: 5px solid #666666; "
+        "}"
         "QComboBox QAbstractItemView { "
         "   background-color: #FFFFFF; "
         "   color: #000000; "
         "   selection-background-color: #6FA85E; "
         "   selection-color: #FFFFFF; "
         "   border: 1px solid #DDDDDD; "
-        "   padding: 5px; "
         "}"
         );
     connect(sortCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
@@ -473,43 +686,21 @@ void MainWindow::setupUserManagementScreen()
                     currentSortOrder = Qt::AscendingOrder;
                     break;
                 case 2: // Nom A-Z
-                    currentSortColumn = 1;
-                    currentSortOrder = Qt::AscendingOrder;
-                    break;
-                case 3: // Nom Z-A
-                    currentSortColumn = 1;
-                    currentSortOrder = Qt::DescendingOrder;
-                    break;
-                case 4: // Email A-Z
                     currentSortColumn = 2;
                     currentSortOrder = Qt::AscendingOrder;
                     break;
-                case 5: // Email Z-A
-                    currentSortColumn = 2;
-                    currentSortOrder = Qt::DescendingOrder;
+                case 3: // Email A-Z
+                    currentSortColumn = 3;
+                    currentSortOrder = Qt::AscendingOrder;
                     break;
                 }
                 filterAndSortUsers();
             });
     searchFilterLayout->addWidget(sortCombo);
 
-    contentLayout->addWidget(searchFilterWidget);
-
-    // Search and Add User Section
-    QWidget *actionWidget = new QWidget();
-    actionWidget->setStyleSheet("QWidget { background-color: transparent; }");
-    QHBoxLayout *actionLayout = new QHBoxLayout(actionWidget);
-    actionLayout->setContentsMargins(0, 0, 0, 0);
-    actionLayout->setSpacing(15);
-
-    // Hidden main search (for backend filtering)
-    searchEdit = new QLineEdit();
-    searchEdit->setVisible(false);
-    actionLayout->addWidget(searchEdit);
-
     // Filter Dropdown
     roleFilter = new QComboBox();
-    roleFilter->addItem("Tous les roles");
+    roleFilter->addItem("Tous les rôles");
     roleFilter->addItem("Administrateur");
     roleFilter->addItem("Employe");
     roleFilter->setFixedWidth(180);
@@ -521,9 +712,21 @@ void MainWindow::setupUserManagementScreen()
         "   background-color: #FFFFFF; "
         "   color: #000000; "
         "   font-size: 14px; "
+        "   font-weight: normal; "
         "}"
-        "QComboBox:focus { border: 1px solid #629952; }"
-        "QComboBox::drop-down { border: none; width: 30px; }"
+        "QComboBox:focus { "
+        "   border: 1px solid #629952; "
+        "}"
+        "QComboBox::drop-down { "
+        "   border: none; "
+        "   width: 30px; "
+        "}"
+        "QComboBox::down-arrow { "
+        "   image: none; "
+        "   border-left: 5px solid transparent; "
+        "   border-right: 5px solid transparent; "
+        "   border-top: 5px solid #666666; "
+        "}"
         "QComboBox QAbstractItemView { "
         "   background-color: #FFFFFF; "
         "   color: #000000; "
@@ -534,54 +737,59 @@ void MainWindow::setupUserManagementScreen()
         );
     connect(roleFilter, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
             [this](int) { filterAndSortUsers(); });
-    actionLayout->addWidget(roleFilter);
+    searchFilterLayout->addWidget(roleFilter);
 
-    actionLayout->addStretch();
-
-    QPushButton *exportPdfBtn = new QPushButton("📄 Exporter PDF");
+    QPushButton *exportPdfBtn = new QPushButton("📄 PDF");
     exportPdfBtn->setStyleSheet(
         "QPushButton { "
         "   background-color: #FF8C42; "
         "   color: #FFFFFF; "
-        "   padding: 10px 25px; "
+        "   padding: 10px 20px; "
         "   border: none; "
         "   border-radius: 4px; "
         "   font-weight: bold; "
         "   font-size: 14px; "
         "}"
         "QPushButton:hover { background-color: #FF7A29; }"
-        "QPushButton:pressed { background-color: #E66B1F; }"
         );
     exportPdfBtn->setCursor(Qt::PointingHandCursor);
     connect(exportPdfBtn, &QPushButton::clicked, this, &MainWindow::onExportPdfClicked);
-    actionLayout->addWidget(exportPdfBtn);
+    searchFilterLayout->addWidget(exportPdfBtn);
 
-    QPushButton *addUserBtn = new QPushButton("+ Ajouter utilisateur");
-    addUserBtn->setStyleSheet(
-        "QPushButton { "
-        "   background-color: #A3D977; "
-        "   color: #FFFFFF; "
-        "   padding: 10px 25px; "
-        "   border: none; "
-        "   border-radius: 4px; "
-        "   font-weight: bold; "
-        "   font-size: 14px; "
-        "}"
-        "QPushButton:hover { background-color: #8FC65E; }"
-        );
-    connect(addUserBtn, &QPushButton::clicked, this, &MainWindow::onAddUserClicked);
-    actionLayout->addWidget(addUserBtn);
+    tableLayout->addWidget(searchFilterWidget);
 
-    contentLayout->addWidget(actionWidget);
+    // Hidden search edit for backend
+    searchEdit = new QLineEdit();
+    searchEdit->setVisible(false);
+    connect(searchNameEdit, &QLineEdit::textChanged, [this](const QString &text) {
+        searchEdit->setText(text);
+        filterAndSortUsers();
+    });
 
     // User Table
     userTable = new QTableWidget();
-    userTable->setColumnCount(6);
-    userTable->setHorizontalHeaderLabels({"ID", "Nom", "Email", "Telephone", "Role", "Actions"});
-    userTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    userTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    userTable->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Fixed);
-    userTable->horizontalHeader()->resizeSection(5, 180); // Fixed width for Actions column
+    userTable->setColumnCount(8);
+    userTable->setHorizontalHeaderLabels({"ID", "Prénom", "Nom", "Email", "Sexe", "Ville", "Rôle", "Actions"});
+
+    // Configure column widths for better visibility
+    userTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    userTable->horizontalHeader()->setStretchLastSection(false);
+
+    // Set minimum widths for each column
+    userTable->setColumnWidth(0, 50);   // ID - petit
+    userTable->setColumnWidth(1, 120);  // Prénom - moyen
+    userTable->setColumnWidth(2, 120);  // Nom - moyen
+    userTable->setColumnWidth(3, 200);  // Email - large
+    userTable->setColumnWidth(4, 80);   // Sexe - petit
+    userTable->setColumnWidth(5, 120);  // Ville - moyen
+    userTable->setColumnWidth(6, 150);  // Rôle - augmenté pour "Administrateur"
+    userTable->setColumnWidth(7, 180);  // Actions - fixe
+
+    // Allow resizing columns except Actions
+    for (int i = 0; i < 7; i++) {
+        userTable->horizontalHeader()->setSectionResizeMode(i, QHeaderView::Interactive);
+    }
+    userTable->horizontalHeader()->setSectionResizeMode(7, QHeaderView::Fixed);
     userTable->verticalHeader()->setVisible(false);
     userTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     userTable->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -589,6 +797,9 @@ void MainWindow::setupUserManagementScreen()
     userTable->setAlternatingRowColors(true);
     userTable->setSortingEnabled(true);
     userTable->setShowGrid(true);
+    userTable->setMinimumWidth(850);  // Largeur minimale pour voir toutes les colonnes
+    userTable->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    userTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
     userTable->setStyleSheet(
         "QTableWidget { "
@@ -599,19 +810,19 @@ void MainWindow::setupUserManagementScreen()
         "   font-size: 14px; "
         "}"
         "QTableWidget::item { "
-        "   padding: 15px 10px; "
+        "   padding: 10px 8px; "
         "   border-bottom: 1px solid #E5E5E5; "
         "}"
         "QTableWidget::item:selected { background-color: #F0F7ED; color: #000000; }"
         "QHeaderView::section { "
         "   background-color: #F8F8F8; "
         "   color: #000000; "
-        "   padding: 15px 10px; "
+        "   padding: 12px 8px; "
         "   border: none; "
         "   border-bottom: 2px solid #E0E0E0; "
         "   border-right: 1px solid #E5E5E5; "
         "   font-weight: bold; "
-        "   font-size: 15px; "
+        "   font-size: 14px; "
         "}"
         "QTableWidget::item:alternate { background-color: #FAFAFA; }"
         );
@@ -619,7 +830,15 @@ void MainWindow::setupUserManagementScreen()
     connect(userTable->horizontalHeader(), &QHeaderView::sectionClicked,
             this, &MainWindow::onSortByColumn);
 
-    contentLayout->addWidget(userTable);
+    tableLayout->addWidget(userTable);
+
+    // Add to splitter
+    splitter->addWidget(formGroupBox);
+    splitter->addWidget(tableWidget);
+    splitter->setStretchFactor(0, 0);  // Form doesn't stretch
+    splitter->setStretchFactor(1, 1);  // Table stretches
+
+    contentLayout->addWidget(splitter);
 
     mainLayout->addWidget(contentArea);
 
@@ -634,124 +853,195 @@ void MainWindow::updateUserTable()
     userTable->setSortingEnabled(false);
     userTable->setRowCount(filteredUsers.size());
 
+    QFont cellFont;
+    cellFont.setPointSize(11);
+    cellFont.setFamily("Segoe UI");
+
     for (int i = 0; i < filteredUsers.size(); ++i) {
         const User &user = filteredUsers[i];
 
+        // ID
         QTableWidgetItem *idItem = new QTableWidgetItem(QString::number(user.id));
         idItem->setTextAlignment(Qt::AlignCenter);
-        QFont idFont;
-        idFont.setPointSize(14);
-        idItem->setFont(idFont);
+        idItem->setFont(cellFont);
         userTable->setItem(i, 0, idItem);
 
-        QTableWidgetItem *nameItem = new QTableWidgetItem(user.name);
-        QFont nameFont;
-        nameFont.setPointSize(14);
-        nameItem->setFont(nameFont);
-        userTable->setItem(i, 1, nameItem);
+        // Prénom
+        QTableWidgetItem *firstNameItem = new QTableWidgetItem(user.firstName);
+        firstNameItem->setFont(cellFont);
+        userTable->setItem(i, 1, firstNameItem);
 
+        // Nom
+        QTableWidgetItem *lastNameItem = new QTableWidgetItem(user.lastName);
+        lastNameItem->setFont(cellFont);
+        userTable->setItem(i, 2, lastNameItem);
+
+        // Email
         QTableWidgetItem *emailItem = new QTableWidgetItem(user.email);
-        QFont emailFont;
-        emailFont.setPointSize(14);
-        emailItem->setFont(emailFont);
-        userTable->setItem(i, 2, emailItem);
+        emailItem->setFont(cellFont);
+        userTable->setItem(i, 3, emailItem);
 
-        QTableWidgetItem *phoneItem = new QTableWidgetItem(user.phone);
-        QFont phoneFont;
-        phoneFont.setPointSize(14);
-        phoneItem->setFont(phoneFont);
-        userTable->setItem(i, 3, phoneItem);
+        // Sexe
+        QTableWidgetItem *genderItem = new QTableWidgetItem(user.gender);
+        genderItem->setTextAlignment(Qt::AlignCenter);
+        genderItem->setFont(cellFont);
+        userTable->setItem(i, 4, genderItem);
+
+        // Ville
+        QTableWidgetItem *cityItem = new QTableWidgetItem(user.city);
+        cityItem->setFont(cellFont);
+        userTable->setItem(i, 5, cityItem);
 
         // Role with colored badge
         QWidget *roleWidget = new QWidget();
+        roleWidget->setStyleSheet("background-color: transparent;");  // Fond transparent
         QHBoxLayout *roleLayout = new QHBoxLayout(roleWidget);
         roleLayout->setContentsMargins(5, 5, 5, 5);
         roleLayout->setAlignment(Qt::AlignCenter);
 
         QLabel *roleLabel = new QLabel(user.role);
+        roleLabel->setAlignment(Qt::AlignCenter);
         if (user.role == "Administrateur") {
             roleLabel->setStyleSheet(
                 "background-color: #FFA726; "
                 "color: #FFFFFF; "
-                "padding: 8px 20px; "
+                "padding: 6px 18px; "
                 "border-radius: 4px; "
                 "font-weight: bold; "
-                "font-size: 13px;"
+                "font-size: 12px; "
+                "min-width: 110px; "
                 );
         } else {
             roleLabel->setStyleSheet(
                 "background-color: #5DADE2; "
                 "color: #FFFFFF; "
-                "padding: 8px 20px; "
+                "padding: 6px 18px; "
                 "border-radius: 4px; "
                 "font-weight: bold; "
-                "font-size: 13px;"
+                "font-size: 12px; "
+                "min-width: 80px; "
                 );
         }
         roleLayout->addWidget(roleLabel);
 
-        // Create a placeholder item for sorting
+        // Create empty item for proper sorting (no text shown)
         QTableWidgetItem *roleSortItem = new QTableWidgetItem(user.role);
-        userTable->setItem(i, 4, roleSortItem);
-        userTable->setCellWidget(i, 4, roleWidget);
+        roleSortItem->setForeground(QBrush(Qt::transparent));  // Texte invisible pour le tri seulement
+        userTable->setItem(i, 6, roleSortItem);
+        userTable->setCellWidget(i, 6, roleWidget);
 
-        // Actions with styled buttons - Vertical layout
+        // Actions with styled buttons
         QWidget *actionWidget = new QWidget();
         QVBoxLayout *actionLayout = new QVBoxLayout(actionWidget);
-        actionLayout->setContentsMargins(10, 8, 10, 8);
-        actionLayout->setSpacing(10);
+        actionLayout->setContentsMargins(8, 6, 8, 6);
+        actionLayout->setSpacing(8);
         actionLayout->setAlignment(Qt::AlignCenter);
 
         QPushButton *editBtn = new QPushButton("Modifier");
         editBtn->setCursor(Qt::PointingHandCursor);
-        editBtn->setFixedSize(140, 35);
+        editBtn->setFixedSize(120, 30);
         editBtn->setStyleSheet(
             "QPushButton { "
             "   background-color: #4CAF50; "
             "   color: #FFFFFF; "
-            "   padding: 8px 15px; "
+            "   padding: 6px 12px; "
             "   border: none; "
-            "   border-radius: 6px; "
-            "   font-size: 14px; "
+            "   border-radius: 5px; "
+            "   font-size: 12px; "
             "   font-weight: bold; "
             "}"
-            "QPushButton:hover { "
-            "   background-color: #45A049; "
-            "}"
+            "QPushButton:hover { background-color: #45A049; }"
             );
         connect(editBtn, &QPushButton::clicked, [this, i]() { onModifyUser(i); });
 
         QPushButton *deleteBtn = new QPushButton("Supprimer");
         deleteBtn->setCursor(Qt::PointingHandCursor);
-        deleteBtn->setFixedSize(140, 35);
+        deleteBtn->setFixedSize(120, 30);
         deleteBtn->setStyleSheet(
             "QPushButton { "
             "   background-color: #F44336; "
             "   color: #FFFFFF; "
-            "   padding: 8px 15px; "
+            "   padding: 6px 12px; "
             "   border: none; "
-            "   border-radius: 6px; "
-            "   font-size: 14px; "
+            "   border-radius: 5px; "
+            "   font-size: 12px; "
             "   font-weight: bold; "
             "}"
-            "QPushButton:hover { "
-            "   background-color: #DA190B; "
-            "}"
+            "QPushButton:hover { background-color: #DA190B; }"
             );
         connect(deleteBtn, &QPushButton::clicked, [this, i]() { onDeleteUser(i); });
 
         actionLayout->addWidget(editBtn);
         actionLayout->addWidget(deleteBtn);
 
-        userTable->setCellWidget(i, 5, actionWidget);
+        userTable->setCellWidget(i, 7, actionWidget);
     }
 
-    // Set row heights to accommodate buttons
+    // Set row heights
     for (int i = 0; i < userTable->rowCount(); ++i) {
-        userTable->setRowHeight(i, 110);
+        userTable->setRowHeight(i, 90);
     }
 
     userTable->setSortingEnabled(true);
+}
+
+void MainWindow::clearForm()
+{
+    formFirstNameEdit->clear();
+    formLastNameEdit->clear();
+    formEmailEdit->clear();
+    formPhoneEdit->clear();
+    formGenderCombo->setCurrentIndex(0);
+    formCityEdit->clear();
+    formPostalCodeEdit->clear();
+    formRoleCombo->setCurrentIndex(0);
+    formPhotoPath.clear();
+    formPhotoLabel->setText("👤");
+    formPhotoLabel->setStyleSheet(
+        "QLabel { "
+        "   border: 2px solid #DDDDDD; "
+        "   border-radius: 40px; "
+        "   background-color: #F5F5F5; "
+        "   font-size: 35px; "
+        "}"
+        );
+    editingUserId = -1;
+}
+
+void MainWindow::loadUserToForm(const User &user)
+{
+    formFirstNameEdit->setText(user.firstName);
+    formLastNameEdit->setText(user.lastName);
+    formEmailEdit->setText(user.email);
+    formPhoneEdit->setText(user.phone);
+    formGenderCombo->setCurrentText(user.gender);
+    formCityEdit->setText(user.city);
+    formPostalCodeEdit->setText(user.postalCode);
+    formRoleCombo->setCurrentText(user.role);
+    formPhotoPath = user.photoPath;
+
+    if (!user.photoPath.isEmpty() && QFile::exists(user.photoPath)) {
+        QPixmap photo(user.photoPath);
+        formPhotoLabel->setPixmap(photo.scaled(80, 80, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        formPhotoLabel->setStyleSheet(
+            "QLabel { "
+            "   border: 2px solid #DDDDDD; "
+            "   border-radius: 40px; "
+            "}"
+            );
+    } else {
+        formPhotoLabel->setText("👤");
+        formPhotoLabel->setStyleSheet(
+            "QLabel { "
+            "   border: 2px solid #DDDDDD; "
+            "   border-radius: 40px; "
+            "   background-color: #F5F5F5; "
+            "   font-size: 35px; "
+            "}"
+            );
+    }
+
+    editingUserId = user.id;
 }
 
 void MainWindow::onSearchTextChanged(const QString &text)
@@ -779,41 +1069,43 @@ void MainWindow::filterAndSortUsers()
     filteredUsers.clear();
 
     for (const User &user : users) {
-        // Apply text search filter (searches in all fields)
         bool matchesSearch = searchText.isEmpty() ||
                              QString::number(user.id).contains(searchText) ||
-                             user.name.toLower().contains(searchText) ||
+                             user.firstName.toLower().contains(searchText) ||
+                             user.lastName.toLower().contains(searchText) ||
                              user.email.toLower().contains(searchText) ||
                              user.phone.contains(searchText) ||
+                             user.gender.toLower().contains(searchText) ||
+                             user.city.toLower().contains(searchText) ||
+                             user.postalCode.contains(searchText) ||
                              user.role.toLower().contains(searchText);
 
-        // Apply role filter
-        bool matchesRole = (selectedRole == "Tous les roles") || (user.role == selectedRole);
+        bool matchesRole = (selectedRole == "Tous les rôles") || (user.role == selectedRole);
 
-        // Include user if it matches both filters
         if (matchesSearch && matchesRole) {
             filteredUsers.append(user);
         }
     }
 
     // Sort filtered users
-    if (currentSortColumn >= 0 && currentSortColumn < 5) {
+    if (currentSortColumn >= 0 && currentSortColumn < 7) {
         std::sort(filteredUsers.begin(), filteredUsers.end(),
                   [this](const User &a, const User &b) {
                       QString valA, valB;
                       switch (currentSortColumn) {
                       case 0:
-                          // For ID, compare as numbers for proper sorting
                           return (currentSortOrder == Qt::AscendingOrder) ? (a.id < b.id) : (a.id > b.id);
-                      case 1: valA = a.name.toLower(); valB = b.name.toLower(); break;
-                      case 2: valA = a.email.toLower(); valB = b.email.toLower(); break;
-                      case 3: valA = a.phone; valB = b.phone; break;
-                      case 4: valA = a.role; valB = b.role; break;
+                      case 1: valA = a.firstName.toLower(); valB = b.firstName.toLower(); break;
+                      case 2: valA = a.lastName.toLower(); valB = b.lastName.toLower(); break;
+                      case 3: valA = a.email.toLower(); valB = b.email.toLower(); break;
+                      case 4: valA = a.gender; valB = b.gender; break;
+                      case 5: valA = a.city.toLower(); valB = b.city.toLower(); break;
+                      case 6: valA = a.role; valB = b.role; break;
                       }
                       if (currentSortColumn != 0) {
                           return (currentSortOrder == Qt::AscendingOrder) ? (valA < valB) : (valA > valB);
                       }
-                      return false; // Should not reach here
+                      return false;
                   });
     }
 
@@ -825,21 +1117,73 @@ void MainWindow::onLoginClicked()
     stackedWidget->setCurrentIndex(1);
 }
 
-void MainWindow::onAddUserClicked()
+void MainWindow::onSaveUserClicked()
 {
-    AddUserDialog dialog(this);
-    if (dialog.exec() == QDialog::Accepted) {
+    // Validate inputs
+    QString firstName = formFirstNameEdit->text().trimmed();
+    QString lastName = formLastNameEdit->text().trimmed();
+    QString email = formEmailEdit->text().trimmed();
+    QString phone = formPhoneEdit->text().trimmed();
+    QString gender = formGenderCombo->currentText();
+    QString city = formCityEdit->text().trimmed();
+    QString postalCode = formPostalCodeEdit->text().trimmed();
+    QString role = formRoleCombo->currentText();
+
+    if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || phone.isEmpty() || city.isEmpty()) {
+        QMessageBox::warning(this, "Erreur", "Veuillez remplir tous les champs obligatoires !");
+        return;
+    }
+
+    if (!email.contains("@") || !email.contains(".")) {
+        QMessageBox::warning(this, "Erreur", "Veuillez entrer une adresse email valide !");
+        return;
+    }
+
+    if (editingUserId == -1) {
+        // Adding new user
         User newUser;
         newUser.id = nextUserId++;
-        newUser.name = dialog.getName();
-        newUser.email = dialog.getEmail();
-        newUser.phone = dialog.getPhone();
-        newUser.role = dialog.getRole();
+        newUser.firstName = firstName;
+        newUser.lastName = lastName;
+        newUser.email = email;
+        newUser.phone = phone;
+        newUser.role = role;
+        newUser.gender = gender;
+        newUser.city = city;
+        newUser.postalCode = postalCode;
+        newUser.photoPath = formPhotoPath;
 
         users.append(newUser);
         filterAndSortUsers();
 
-        QMessageBox::information(this, "Succes", "Utilisateur ajoute avec succes !");
+        QMessageBox::information(this, "Succès", "Utilisateur ajouté avec succès !");
+        clearForm();
+    } else {
+        // Editing existing user
+        int actualIndex = -1;
+        for (int i = 0; i < users.size(); ++i) {
+            if (users[i].id == editingUserId) {
+                actualIndex = i;
+                break;
+            }
+        }
+
+        if (actualIndex != -1) {
+            users[actualIndex].firstName = firstName;
+            users[actualIndex].lastName = lastName;
+            users[actualIndex].email = email;
+            users[actualIndex].phone = phone;
+            users[actualIndex].role = role;
+            users[actualIndex].gender = gender;
+            users[actualIndex].city = city;
+            users[actualIndex].postalCode = postalCode;
+            users[actualIndex].photoPath = formPhotoPath;
+
+            filterAndSortUsers();
+
+            QMessageBox::information(this, "Succès", "Utilisateur modifié avec succès !");
+            clearForm();
+        }
     }
 }
 
@@ -860,17 +1204,8 @@ void MainWindow::onModifyUser(int row)
 
     if (actualIndex == -1) return;
 
-    AddUserDialog dialog(this, &user);
-    if (dialog.exec() == QDialog::Accepted) {
-        users[actualIndex].name = dialog.getName();
-        users[actualIndex].email = dialog.getEmail();
-        users[actualIndex].phone = dialog.getPhone();
-        users[actualIndex].role = dialog.getRole();
-
-        filterAndSortUsers();
-
-        QMessageBox::information(this, "Succes", "Utilisateur modifie avec succes !");
-    }
+    // Load user data into the form
+    loadUserToForm(users[actualIndex]);
 }
 
 void MainWindow::onDeleteUser(int row)
@@ -881,11 +1216,11 @@ void MainWindow::onDeleteUser(int row)
 
     QMessageBox::StandardButton reply;
     reply = QMessageBox::question(this, "Confirmation",
-                                  "Etes-vous sur de vouloir supprimer l'utilisateur '" + user.name + "' ?",
+                                  "Êtes-vous sûr de vouloir supprimer l'utilisateur '" +
+                                      user.firstName + " " + user.lastName + "' ?",
                                   QMessageBox::Yes | QMessageBox::No);
 
     if (reply == QMessageBox::Yes) {
-        // Find and remove from main users list
         for (int i = 0; i < users.size(); ++i) {
             if (users[i].id == user.id) {
                 users.removeAt(i);
@@ -895,172 +1230,39 @@ void MainWindow::onDeleteUser(int row)
 
         filterAndSortUsers();
 
-        QMessageBox::information(this, "Succes", "Utilisateur supprime avec succes !");
+        QMessageBox::information(this, "Succès", "Utilisateur supprimé avec succès !");
+
+        // Clear form if we were editing this user
+        if (editingUserId == user.id) {
+            clearForm();
+        }
     }
 }
 
-AddUserDialog::AddUserDialog(QWidget *parent, User *editUser)
-    : QDialog(parent)
+void MainWindow::onBrowsePhotoClicked()
 {
-    setWindowTitle(editUser ? "Modifier l'utilisateur" : "Ajouter un utilisateur");
-    setModal(true);
-    setFixedSize(500, 450);
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    "Choisir une photo de profil",
+                                                    QDir::homePath(),
+                                                    "Images (*.png *.jpg *.jpeg *.bmp)");
 
-    setStyleSheet(
-        "QDialog { background-color: #FFFFFF; }"
-        "QLabel { color: #000000; background: transparent; }"
-        );
-
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(15);
-    mainLayout->setContentsMargins(30, 30, 30, 30);
-
-    QLabel *titleLabel = new QLabel(editUser ? "Modifier l'utilisateur" : "Nouvel utilisateur");
-    titleLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #000000; background: transparent;");
-    titleLabel->setAlignment(Qt::AlignCenter);
-    mainLayout->addWidget(titleLabel);
-
-    mainLayout->addSpacing(10);
-
-    QFormLayout *formLayout = new QFormLayout();
-    formLayout->setSpacing(15);
-    formLayout->setLabelAlignment(Qt::AlignRight);
-
-    QLabel *nameLabel = new QLabel("Nom complet :");
-    nameLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #000000; background: transparent;");
-
-    nameEdit = new QLineEdit();
-    nameEdit->setPlaceholderText("Nom Prenom");
-    if (editUser) nameEdit->setText(editUser->name);
-    nameEdit->setStyleSheet(
-        "QLineEdit { "
-        "   padding: 10px; "
-        "   border: 2px solid #CCCCCC; "
-        "   border-radius: 6px; "
-        "   background-color: #FFFFFF; "
-        "   color: #000000; "
-        "   font-size: 14px; "
-        "}"
-        "QLineEdit:focus { border: 2px solid #A3C651; }"
-        );
-
-    QLabel *emailLabel = new QLabel("Email :");
-    emailLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #000000; background: transparent;");
-
-    emailEdit = new QLineEdit();
-    emailEdit->setPlaceholderText("nom@example.com");
-    if (editUser) emailEdit->setText(editUser->email);
-    emailEdit->setStyleSheet(
-        "QLineEdit { "
-        "   padding: 10px; "
-        "   border: 2px solid #CCCCCC; "
-        "   border-radius: 6px; "
-        "   background-color: #FFFFFF; "
-        "   color: #000000; "
-        "   font-size: 14px; "
-        "}"
-        "QLineEdit:focus { border: 2px solid #A3C651; }"
-        );
-
-    QLabel *phoneLabel = new QLabel("Telephone :");
-    phoneLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #000000; background: transparent;");
-
-    phoneEdit = new QLineEdit();
-    phoneEdit->setPlaceholderText("+216 XX XXX XXX");
-    if (editUser) phoneEdit->setText(editUser->phone);
-    phoneEdit->setStyleSheet(
-        "QLineEdit { "
-        "   padding: 10px; "
-        "   border: 2px solid #CCCCCC; "
-        "   border-radius: 6px; "
-        "   background-color: #FFFFFF; "
-        "   color: #000000; "
-        "   font-size: 14px; "
-        "}"
-        "QLineEdit:focus { border: 2px solid #A3C651; }"
-        );
-
-    QLabel *roleLabel = new QLabel("Role :");
-    roleLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #000000; background: transparent;");
-
-    roleCombo = new QComboBox();
-    roleCombo->addItem("Administrateur");
-    roleCombo->addItem("Employe");
-    if (editUser) {
-        int index = roleCombo->findText(editUser->role);
-        if (index >= 0) roleCombo->setCurrentIndex(index);
+    if (!fileName.isEmpty()) {
+        formPhotoPath = fileName;
+        QPixmap photo(fileName);
+        formPhotoLabel->setPixmap(photo.scaled(80, 80, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        formPhotoLabel->setStyleSheet(
+            "QLabel { "
+            "   border: 2px solid #DDDDDD; "
+            "   border-radius: 40px; "
+            "}"
+            );
     }
-    roleCombo->setStyleSheet(
-        "QComboBox { "
-        "   padding: 10px; "
-        "   border: 2px solid #CCCCCC; "
-        "   border-radius: 6px; "
-        "   background-color: #FFFFFF; "
-        "   color: #000000; "
-        "   font-size: 14px; "
-        "}"
-        "QComboBox:focus { border: 2px solid #A3C651; }"
-        "QComboBox::drop-down { border: none; width: 30px; }"
-        "QComboBox QAbstractItemView { "
-        "   background-color: #FFFFFF; "
-        "   color: #000000; "
-        "   selection-background-color: #A3C651; "
-        "   selection-color: #FFFFFF; "
-        "   border: 1px solid #CCCCCC; "
-        "}"
-        );
-
-    formLayout->addRow(nameLabel, nameEdit);
-    formLayout->addRow(emailLabel, emailEdit);
-    formLayout->addRow(phoneLabel, phoneEdit);
-    formLayout->addRow(roleLabel, roleCombo);
-
-    mainLayout->addLayout(formLayout);
-    mainLayout->addSpacing(10);
-
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->setSpacing(10);
-
-    QPushButton *cancelBtn = new QPushButton("Annuler");
-    cancelBtn->setStyleSheet(
-        "QPushButton { "
-        "   background-color: #FFFFFF; "
-        "   color: #000000; "
-        "   padding: 12px 24px; "
-        "   border: 2px solid #CCCCCC; "
-        "   border-radius: 6px; "
-        "   font-weight: bold; "
-        "   font-size: 14px; "
-        "}"
-        "QPushButton:hover { "
-        "   background-color: #F5F5F5; "
-        "   border: 2px solid #999999; "
-        "}"
-        );
-    connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
-
-    QPushButton *saveBtn = new QPushButton(editUser ? "Modifier" : "Ajouter");
-    saveBtn->setStyleSheet(
-        "QPushButton { "
-        "   background-color: #A3C651; "
-        "   color: #FFFFFF; "
-        "   padding: 12px 24px; "
-        "   border: none; "
-        "   border-radius: 6px; "
-        "   font-weight: bold; "
-        "   font-size: 14px; "
-        "}"
-        "QPushButton:hover { background-color: #8FB544; }"
-        );
-    connect(saveBtn, &QPushButton::clicked, this, &QDialog::accept);
-
-    buttonLayout->addStretch();
-    buttonLayout->addWidget(cancelBtn);
-    buttonLayout->addWidget(saveBtn);
-
-    mainLayout->addLayout(buttonLayout);
 }
 
+void MainWindow::onClearFormClicked()
+{
+    clearForm();
+}
 
 void MainWindow::onForgotPasswordClicked()
 {
@@ -1068,12 +1270,13 @@ void MainWindow::onForgotPasswordClicked()
     dialog.exec();
 }
 
+// PasswordResetDialog implementation
 PasswordResetDialog::PasswordResetDialog(QWidget *parent)
     : QDialog(parent)
 {
-    setWindowTitle("Réinitialiser le mot de passe");
+    setWindowTitle("Réinitialisation du mot de passe");
     setModal(true);
-    setFixedSize(450, 280);
+    setFixedSize(500, 280);
 
     setStyleSheet(
         "QDialog { background-color: #FFFFFF; }"
@@ -1084,23 +1287,22 @@ PasswordResetDialog::PasswordResetDialog(QWidget *parent)
     mainLayout->setSpacing(20);
     mainLayout->setContentsMargins(30, 30, 30, 30);
 
-    QLabel *iconLabel = new QLabel("🔒");
-    iconLabel->setStyleSheet("font-size: 48px; background: transparent;");
-    iconLabel->setAlignment(Qt::AlignCenter);
-    mainLayout->addWidget(iconLabel);
-
-    QLabel *titleLabel = new QLabel("Mot de passe oublié ?");
+    QLabel *titleLabel = new QLabel("Réinitialiser le mot de passe");
     titleLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #000000; background: transparent;");
     titleLabel->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(titleLabel);
 
-    QLabel *descLabel = new QLabel("Entrez votre adresse email pour recevoir un lien de réinitialisation.");
-    descLabel->setStyleSheet("font-size: 13px; color: #666666; background: transparent;");
-    descLabel->setWordWrap(true);
-    descLabel->setAlignment(Qt::AlignCenter);
-    mainLayout->addWidget(descLabel);
+    QLabel *instructionLabel = new QLabel(
+        "Entrez votre adresse email et nous vous enverrons un lien\n"
+        "pour réinitialiser votre mot de passe.");
+    instructionLabel->setStyleSheet("font-size: 14px; color: #666666; background: transparent;");
+    instructionLabel->setAlignment(Qt::AlignCenter);
+    instructionLabel->setWordWrap(true);
+    mainLayout->addWidget(instructionLabel);
 
-    QLabel *emailLabel = new QLabel("Email :");
+    mainLayout->addSpacing(10);
+
+    QLabel *emailLabel = new QLabel("Adresse email :");
     emailLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #000000; background: transparent;");
     mainLayout->addWidget(emailLabel);
 
@@ -1122,12 +1324,12 @@ PasswordResetDialog::PasswordResetDialog(QWidget *parent)
     mainLayout->addSpacing(10);
 
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->setSpacing(10);
+    buttonLayout->setSpacing(15);
 
     QPushButton *cancelBtn = new QPushButton("Annuler");
     cancelBtn->setStyleSheet(
         "QPushButton { "
-        "   background-color: #FFFFFF; "
+        "   background-color: #F5F5F5; "
         "   color: #000000; "
         "   padding: 12px 24px; "
         "   border: 2px solid #CCCCCC; "
@@ -1213,7 +1415,6 @@ void MainWindow::onExportPdfClicked()
         return;
     }
 
-    // Define fonts and colors
     QFont titleFont("Arial", 20, QFont::Bold);
     QFont headerFont("Arial", 12, QFont::Bold);
     QFont normalFont("Arial", 10);
@@ -1224,26 +1425,22 @@ void MainWindow::onExportPdfClicked()
     int margin = 50;
     int yPos = margin;
 
-    // Draw header with logo area
     painter.setPen(QColor("#6FA85E"));
     painter.setFont(titleFont);
     QString title = "TuniWaste - Liste des Utilisateurs";
     painter.drawText(margin, yPos, title);
     yPos += 60;
 
-    // Draw date and time
     painter.setFont(smallFont);
     painter.setPen(Qt::black);
     QString dateTime = "Généré le : " + QDateTime::currentDateTime().toString("dd/MM/yyyy à hh:mm:ss");
     painter.drawText(margin, yPos, dateTime);
     yPos += 40;
 
-    // Draw horizontal line
     painter.setPen(QPen(QColor("#E0E0E0"), 2));
     painter.drawLine(margin, yPos, pageWidth - margin, yPos);
     yPos += 30;
 
-    // Draw statistics box
     painter.setFont(normalFont);
     painter.setPen(Qt::black);
     QString stats = QString("Nombre total d'utilisateurs : %1  |  Administrateurs : %2  |  Employés : %3")
@@ -1251,22 +1448,19 @@ void MainWindow::onExportPdfClicked()
                         .arg(std::count_if(filteredUsers.begin(), filteredUsers.end(),
                                            [](const User& u) { return u.role == "Administrateur"; }))
                         .arg(std::count_if(filteredUsers.begin(), filteredUsers.end(),
-                                           [](const User& u) { return u.role == "Employe"; }));
+                                           [](const User& u) { return u.role == "Employe"; }))  ;
     painter.drawText(margin, yPos, stats);
     yPos += 50;
 
-    // Table setup
-    int colWidths[] = {80, 200, 280, 150, 150}; // ID, Nom, Email, Telephone, Role
+    int colWidths[] = {50, 130, 130, 210, 80, 110, 100};
     int totalWidth = 0;
     for (int w : colWidths) totalWidth += w;
 
-    // Adjust column widths to fit page
     double scaleFactor = (double)(pageWidth - 2 * margin) / totalWidth;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 7; i++) {
         colWidths[i] = (int)(colWidths[i] * scaleFactor);
     }
 
-    // Draw table header
     painter.setFont(headerFont);
     painter.setPen(Qt::white);
     painter.setBrush(QColor("#6FA85E"));
@@ -1275,7 +1469,7 @@ void MainWindow::onExportPdfClicked()
     painter.drawRect(margin, yPos, pageWidth - 2 * margin, headerHeight);
 
     int xPos = margin;
-    QStringList headers = {"ID", "Nom", "Email", "Téléphone", "Rôle"};
+    QStringList headers = {"ID", "Prénom", "Nom", "Email", "Sexe", "Ville", "Rôle"};
 
     for (int i = 0; i < headers.size(); i++) {
         QRect headerRect(xPos + 10, yPos, colWidths[i] - 10, headerHeight);
@@ -1285,18 +1479,15 @@ void MainWindow::onExportPdfClicked()
 
     yPos += headerHeight;
 
-    // Draw table rows
     painter.setFont(normalFont);
     int rowHeight = 35;
     bool alternate = false;
 
     for (const User& user : filteredUsers) {
-        // Check if we need a new page
         if (yPos + rowHeight > pageHeight - margin) {
             printer.newPage();
             yPos = margin;
 
-            // Redraw header on new page
             painter.setPen(Qt::white);
             painter.setBrush(QColor("#6FA85E"));
             painter.setFont(headerFont);
@@ -1313,7 +1504,6 @@ void MainWindow::onExportPdfClicked()
             alternate = false;
         }
 
-        // Draw row background
         if (alternate) {
             painter.setBrush(QColor("#F9F9F9"));
         } else {
@@ -1322,15 +1512,16 @@ void MainWindow::onExportPdfClicked()
         painter.setPen(QColor("#E0E0E0"));
         painter.drawRect(margin, yPos, pageWidth - 2 * margin, rowHeight);
 
-        // Draw cell data
         painter.setPen(Qt::black);
         xPos = margin;
 
         QStringList rowData = {
             QString::number(user.id),
-            user.name,
+            user.firstName,
+            user.lastName,
             user.email,
-            user.phone,
+            user.gender,
+            user.city,
             user.role
         };
 
@@ -1345,7 +1536,6 @@ void MainWindow::onExportPdfClicked()
         alternate = !alternate;
     }
 
-    // Draw footer
     yPos = pageHeight - margin + 20;
     painter.setFont(smallFont);
     painter.setPen(QColor("#999999"));

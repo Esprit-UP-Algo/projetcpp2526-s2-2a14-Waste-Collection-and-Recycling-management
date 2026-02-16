@@ -14,28 +14,15 @@
 
 struct User {
     int id;
-    QString name;
+    QString firstName;     // Prénom
+    QString lastName;      // Nom
     QString email;
     QString phone;
     QString role;
-};
-
-class AddUserDialog : public QDialog
-{
-    Q_OBJECT
-
-public:
-    explicit AddUserDialog(QWidget *parent = nullptr, User *editUser = nullptr);
-    QString getName() const { return nameEdit->text(); }
-    QString getEmail() const { return emailEdit->text(); }
-    QString getPhone() const { return phoneEdit->text(); }
-    QString getRole() const { return roleCombo->currentText(); }
-
-private:
-    QLineEdit *nameEdit;
-    QLineEdit *emailEdit;
-    QLineEdit *phoneEdit;
-    QComboBox *roleCombo;
+    QString gender;        // New: sexe (homme/femme)
+    QString city;          // New: ville
+    QString postalCode;    // New: code postal
+    QString photoPath;     // New: photo de profile path
 };
 
 class PasswordResetDialog : public QDialog
@@ -63,19 +50,23 @@ public:
 
 private slots:
     void onLoginClicked();
-    void onAddUserClicked();
+    void onSaveUserClicked();     // Changed from onAddUserClicked
     void onModifyUser(int row);
     void onDeleteUser(int row);
     void onForgotPasswordClicked();
     void onSearchTextChanged(const QString &text);
     void onSortByColumn(int column);
     void onExportPdfClicked();
+    void onBrowsePhotoClicked();  // New
+    void onClearFormClicked();    // New
 
 private:
     void setupLoginScreen();
     void setupUserManagementScreen();
     void updateUserTable();
     void filterAndSortUsers();
+    void clearForm();             // New
+    void loadUserToForm(const User &user); // New
     QWidget* createSidebar();
 
     QStackedWidget *stackedWidget;
@@ -87,6 +78,19 @@ private:
     QComboBox *roleFilter;
     int currentSortColumn;
     Qt::SortOrder currentSortOrder;
+    
+    // Form fields for the permanent form on top
+    QLineEdit *formFirstNameEdit;  // Prénom
+    QLineEdit *formLastNameEdit;   // Nom
+    QLineEdit *formEmailEdit;
+    QLineEdit *formPhoneEdit;
+    QComboBox *formRoleCombo;
+    QComboBox *formGenderCombo;
+    QLineEdit *formCityEdit;
+    QLineEdit *formPostalCodeEdit;
+    QLabel *formPhotoLabel;
+    QString formPhotoPath;
+    int editingUserId;  // -1 when adding new, otherwise the ID being edited
 };
 
 #endif

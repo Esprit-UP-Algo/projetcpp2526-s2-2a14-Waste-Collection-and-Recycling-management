@@ -1,0 +1,79 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-ba1abac719d6f4b35535.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "tuniwaste",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "tuniwaste::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-tuniwaste-Debug-980efa8d1a5cc8035900.json",
+					"name" : "tuniwaste",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "tuniwaste_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-tuniwaste_autogen-Debug-a1efb5687983a47d5b32.json",
+					"name" : "tuniwaste_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "tuniwaste_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-tuniwaste_autogen_timestamp_deps-Debug-8f409af97e0c5c107bd2.json",
+					"name" : "tuniwaste_autogen_timestamp_deps",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/eyae8/Documents/tuniwaste/build/Desktop_Qt_6_7_3_MinGW_64_bit-Debug",
+		"source" : "C:/Users/eyae8/Documents/tuniwaste"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

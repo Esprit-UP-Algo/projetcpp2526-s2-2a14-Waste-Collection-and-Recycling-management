@@ -1,33 +1,30 @@
-#ifndef RECYCLAGE_H
-#define RECYCLAGE_H
+#ifndef GESTIONPOUBELLES_H
+#define GESTIONPOUBELLES_H
 
 #include <QComboBox>
-#include <QDate>
-#include <QDateEdit>
-#include <QDoubleSpinBox>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMap>
 #include <QPushButton>
+#include <QSpinBox>
 #include <QString>
 #include <QTableWidget>
 #include <QVBoxLayout>
 #include <QWidget>
 
-
-class Recyclage : public QWidget {
+class GestionPoubelles : public QWidget {
   Q_OBJECT
 
 public:
-  explicit Recyclage(QWidget *parent = nullptr);
-  ~Recyclage();
+  explicit GestionPoubelles(QWidget *parent = nullptr);
+  ~GestionPoubelles();
 
 private slots:
-  void onAddRecyclage();
-  void onModifyRecyclage(int row);
-  void onDeleteRecyclage(int row);
+  void onAddPoubelle();
+  void onModifyPoubelle(int row);
+  void onDeletePoubelle(int row);
   void onSearchTextChanged(const QString &text);
   void onFilterChanged(int index);
   void onExportPDF();
@@ -38,14 +35,15 @@ private:
   QWidget *mainContent;
 
   // Table
-  QTableWidget *recyclageTable;
+  QTableWidget *poubelleTable;
 
   // Form inputs
-  QLineEdit *centreInput;
+  QLineEdit *localisationInput;
+  QSpinBox *niveauInput;
+  QComboBox *etatCombo;
+  QLineEdit *idZoneInput;
+  QSpinBox *capaciteInput;
   QComboBox *typeCombo;
-  QDoubleSpinBox *quantiteInput;
-  QDateEdit *dateInput;
-  QLineEdit *responsableInput;
   QPushButton *saveButton;
   QLabel *formTitleLabel;
 
@@ -57,6 +55,7 @@ private:
 
   // Search and filters
   QLineEdit *searchInput;
+  QComboBox *etatFilter;
   QComboBox *typeFilter;
 
   // Data
@@ -68,11 +67,13 @@ private:
   void createFormPanel();
   void createMainContent();
   void createChartWidget();
-  void loadRecyclageData();
+  void loadPoubelleData();
   void applyStyles();
-  void addTableRow(int id, const QString &centre, const QString &type,
-                   double quantite, const QDate &date,
-                   const QString &responsable);
+  void addTableRow(int id, const QString &localisation, int niveau,
+                   const QString &etat, const QString &idZone, int capacite,
+                   const QString &type);
+  QString getEtatStyle(const QString &etat);
+  QString getNiveauStyle(int niveau);
   void clearFormInputs();
   void setFormForEditing(int row);
   void updateChartData();
@@ -80,4 +81,4 @@ private:
                   int total, const QString &color);
 };
 
-#endif // RECYCLAGE_H
+#endif // GESTIONPOUBELLES_H

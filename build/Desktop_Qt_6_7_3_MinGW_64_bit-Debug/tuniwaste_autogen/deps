@@ -339,6 +339,31 @@ tuniwaste_autogen/timestamp: \
 	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6PrintSupport/Qt6PrintSupportTargets-relwithdebinfo.cmake \
 	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6PrintSupport/Qt6PrintSupportTargets.cmake \
 	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6PrintSupport/Qt6PrintSupportVersionlessTargets.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QMimerSQLDriverPluginAdditionalTargetInfo.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QMimerSQLDriverPluginConfig.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QMimerSQLDriverPluginTargets-relwithdebinfo.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QMimerSQLDriverPluginTargets.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QODBCDriverPluginAdditionalTargetInfo.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QODBCDriverPluginConfig.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QODBCDriverPluginTargets-relwithdebinfo.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QODBCDriverPluginTargets.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QPSQLDriverPluginAdditionalTargetInfo.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QPSQLDriverPluginConfig.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QPSQLDriverPluginTargets-relwithdebinfo.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QPSQLDriverPluginTargets.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QSQLiteDriverPluginAdditionalTargetInfo.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QSQLiteDriverPluginConfig.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QSQLiteDriverPluginTargets-relwithdebinfo.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6QSQLiteDriverPluginTargets.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6SqlAdditionalTargetInfo.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6SqlConfig.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6SqlConfigVersion.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6SqlConfigVersionImpl.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6SqlDependencies.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6SqlPlugins.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6SqlTargets-relwithdebinfo.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6SqlTargets.cmake \
+	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Sql/Qt6SqlVersionlessTargets.cmake \
 	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Widgets/Qt6QModernWindowsStylePluginAdditionalTargetInfo.cmake \
 	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Widgets/Qt6QModernWindowsStylePluginConfig.cmake \
 	C:/Qt/6.7.3/mingw_64/lib/cmake/Qt6Widgets/Qt6QModernWindowsStylePluginTargets-relwithdebinfo.cmake \
@@ -605,6 +630,8 @@ tuniwaste_autogen/timestamp: \
 	C:/Users/eyae8/Documents/tuniwaste/build/Desktop_Qt_6_7_3_MinGW_64_bit-Debug/CMakeFiles/3.30.5/CMakeRCCompiler.cmake \
 	C:/Users/eyae8/Documents/tuniwaste/build/Desktop_Qt_6_7_3_MinGW_64_bit-Debug/CMakeFiles/3.30.5/CMakeSystem.cmake \
 	C:/Users/eyae8/Documents/tuniwaste/build/Desktop_Qt_6_7_3_MinGW_64_bit-Debug/tuniwaste_autogen/moc_predefs.h \
+	C:/Users/eyae8/Documents/tuniwaste/connection.cpp \
+	C:/Users/eyae8/Documents/tuniwaste/connection.h \
 	C:/Users/eyae8/Documents/tuniwaste/gestion_des_poubelles.cpp \
 	C:/Users/eyae8/Documents/tuniwaste/gestion_des_poubelles.h \
 	C:/Users/eyae8/Documents/tuniwaste/main.cpp \

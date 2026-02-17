@@ -6,8 +6,7 @@
 			[
 				{
 					"build" : ".",
-					"hasInstallRule" : true,
-					"jsonFile" : "directory-.-Debug-ba1abac719d6f4b35535.json",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
 					"minimumCMakeVersion" : 
 					{
 						"string" : "3.16"
@@ -44,7 +43,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "tuniwaste::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-tuniwaste-Debug-980efa8d1a5cc8035900.json",
+					"jsonFile" : "target-tuniwaste-Debug-06ef9302837d68ca4654.json",
 					"name" : "tuniwaste",
 					"projectIndex" : 0
 				},

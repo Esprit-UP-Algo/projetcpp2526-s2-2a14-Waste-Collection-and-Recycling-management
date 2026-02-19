@@ -43,7 +43,7 @@ void Recyclage::createFormPanel() {
   formLayout->setSpacing(20);
 
   // Form Title
-  formTitleLabel = new QLabel("📝 Ajouter un recyclage");
+  formTitleLabel = new QLabel("Ajouter un recyclage");
   formTitleLabel->setObjectName("formTitle");
   QFont titleFont = formTitleLabel->font();
   titleFont.setPointSize(16);
@@ -65,7 +65,7 @@ void Recyclage::createFormPanel() {
   fieldsLayout->setContentsMargins(0, 0, 0, 0);
 
   // Centre
-  QLabel *centreLabel = new QLabel("🏢 Centre de Recyclage");
+  QLabel *centreLabel = new QLabel("Centre de Recyclage");
   centreLabel->setObjectName("formLabel");
   centreInput = new QLineEdit();
   centreInput->setObjectName("formInput");
@@ -76,7 +76,7 @@ void Recyclage::createFormPanel() {
   fieldsLayout->addSpacing(12);
 
   // Type
-  QLabel *typeLabel = new QLabel("♻️ Type de déchet");
+  QLabel *typeLabel = new QLabel("Type de déchet");
   typeLabel->setObjectName("formLabel");
   typeCombo = new QComboBox();
   typeCombo->setObjectName("formInput");
@@ -92,7 +92,7 @@ void Recyclage::createFormPanel() {
   fieldsLayout->addSpacing(12);
 
   // Quantité
-  QLabel *quantiteLabel = new QLabel("⚖️ Quantité (kg)");
+  QLabel *quantiteLabel = new QLabel("Quantité (kg)");
   quantiteLabel->setObjectName("formLabel");
   quantiteInput = new QDoubleSpinBox();
   quantiteInput->setObjectName("formInput");
@@ -105,7 +105,7 @@ void Recyclage::createFormPanel() {
   fieldsLayout->addSpacing(12);
 
   // Date
-  QLabel *dateLabel = new QLabel("📅 Date");
+  QLabel *dateLabel = new QLabel("Date");
   dateLabel->setObjectName("formLabel");
   dateInput = new QDateEdit(QDate::currentDate());
   dateInput->setObjectName("formInput");
@@ -117,7 +117,7 @@ void Recyclage::createFormPanel() {
   fieldsLayout->addSpacing(12);
 
   // Responsable
-  QLabel *respLabel = new QLabel("👤 Responsable");
+  QLabel *respLabel = new QLabel("Responsable");
   respLabel->setObjectName("formLabel");
   responsableInput = new QLineEdit();
   responsableInput->setObjectName("formInput");
@@ -130,7 +130,7 @@ void Recyclage::createFormPanel() {
   formLayout->addSpacing(20);
 
   // Save Button
-  saveButton = new QPushButton("💾 Enregistrer");
+  saveButton = new QPushButton("Enregistrer");
   saveButton->setObjectName("saveButton");
   saveButton->setFixedHeight(42);
   saveButton->setCursor(Qt::PointingHandCursor);
@@ -181,6 +181,14 @@ void Recyclage::createMainContent() {
   pageTitle->setObjectName("pageTitle");
   titleLayout->addWidget(pageTitle);
   titleLayout->addStretch();
+
+  exportPdfButton = new QPushButton("Exporter PDF");
+  exportPdfButton->setObjectName("exportPdfButton");
+  exportPdfButton->setFixedHeight(36);
+  exportPdfButton->setCursor(Qt::PointingHandCursor);
+  connect(exportPdfButton, &QPushButton::clicked, this,
+          &Recyclage::onExportPDF);
+  titleLayout->addWidget(exportPdfButton);
   wrapperLayout->addLayout(titleLayout);
 
   // Search and Filters
@@ -219,9 +227,8 @@ void Recyclage::createMainContent() {
   recyclageTable = new QTableWidget();
   recyclageTable->setObjectName("poubelleTable"); // Reuse same style ID
   recyclageTable->setColumnCount(7);
-  recyclageTable->setHorizontalHeaderLabels({"🆔 ID", "🏢 Centre", "♻️ Type",
-                                             "⚖️ Quantité", "📅 Date",
-                                             "👤 Responsable", "⚡ Actions"});
+  recyclageTable->setHorizontalHeaderLabels(
+      {"ID", "CENTRE", "TYPE", "QUANTITÉ", "DATE", "RESPONSABLE", "ACTIONS"});
 
   recyclageTable->horizontalHeader()->setSectionResizeMode(
       QHeaderView::Stretch);
@@ -246,17 +253,7 @@ void Recyclage::createMainContent() {
 
   contentLayout->addWidget(contentWrapper);
 
-  // Export PDF Button
-  QHBoxLayout *exportLayout = new QHBoxLayout();
-  exportLayout->addStretch();
-  exportPdfButton = new QPushButton("📄 Exporter PDF");
-  exportPdfButton->setObjectName("exportPdfButton");
-  exportPdfButton->setFixedHeight(36);
-  exportPdfButton->setCursor(Qt::PointingHandCursor);
-  connect(exportPdfButton, &QPushButton::clicked, this,
-          &Recyclage::onExportPDF);
-  exportLayout->addWidget(exportPdfButton);
-  contentLayout->addLayout(exportLayout);
+  // Export PDF Button moved to header
 
   // Chart Widget
   createChartWidget();
@@ -701,9 +698,9 @@ void Recyclage::applyStyles() {
         QSpinBox::up-button:hover, QSpinBox::down-button:hover, QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover { background: #9BCB4E; }
         QComboBox::drop-down { border: none; width: 30px; }
         QComboBox::down-arrow { image: none; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid #666; margin-right: 10px; }
-        #saveButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #9BCB4E, stop:1 #8AB83E); color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: bold; letter-spacing: 0.5px; }
-        #saveButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #B7D97A, stop:1 #9BCB4E); }
-        #saveButton:pressed { background: #8AB83E; }
+        #saveButton { background: #4CAF50; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: bold; letter-spacing: 0.5px; }
+        #saveButton:hover { background: #45a049; }
+        #saveButton:pressed { background: #3d8b40; }
         #infoBox { background: #E8F4F8; color: #1565C0; padding: 16px; border-radius: 12px; border-left: 5px solid #2196F3; font-size: 13px; line-height: 1.6; }
         #mainContent { background: #F7F7F7; }
         #header { background: white; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }

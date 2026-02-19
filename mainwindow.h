@@ -82,6 +82,8 @@ private slots:
   void onBinsClicked();
   void onDashboardClicked();
   void onExportUsersPDF();
+  void onReportsClicked();
+  void onSettingsClicked();
 
   // New Slots for Split Layout User Management
   void onUserSaveClicked();

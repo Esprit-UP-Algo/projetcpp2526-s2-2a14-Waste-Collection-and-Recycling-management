@@ -21,12 +21,11 @@
 #include <QUrl>
 #include <QVBoxLayout>
 #include <QtCharts/QChart>
+#include <QtCharts/QChartGlobal>
 #include <QtCharts/QChartView>
 #include <QtCharts/QPieSeries>
 #include <QtCharts/QPieSlice>
 #include <algorithm>
-
-// Explicitly use QtCharts namespace in code, no 'using namespace'
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), nextUserId(5), currentSortColumn(-1),
@@ -195,6 +194,15 @@ void MainWindow::onLoginClicked() {
   }
 }
 
+void MainWindow::onForgotPasswordClicked() {
+  PasswordResetDialog dialog(this);
+  if (dialog.exec() == QDialog::Accepted) {
+    QMessageBox::information(this, "Réinitialisation",
+                             "Un lien de réinitialisation a été envoyé à : " +
+                                 dialog.getEmail());
+  }
+}
+
 // =========================================================
 // APP SHELL & SIDEBAR
 // =========================================================
@@ -217,22 +225,40 @@ QWidget *MainWindow::createSidebar() {
   QWidget *sidebar = new QWidget();
   sidebar->setFixedWidth(280);
   sidebar->setStyleSheet(
-      "QWidget { background-color: #2E7D32; }"); // Darker green
+      "QWidget { background-color: #66BB6A; }"); // Lighter green palette
 
   QVBoxLayout *layout = new QVBoxLayout(sidebar);
   layout->setContentsMargins(0, 20, 0, 20);
-  layout->setSpacing(10);
+  layout->setSpacing(5);
+
+  // Logo + Title
+  QWidget *logoContainer = new QWidget();
+  logoContainer->setStyleSheet("background: transparent;");
+  QHBoxLayout *logoLayout = new QHBoxLayout(logoContainer);
+  logoLayout->setContentsMargins(20, 0, 20, 20);
+  logoLayout->setSpacing(10);
+
+  QLabel *logoIcon = new QLabel();
+  logoIcon->setStyleSheet("background: transparent;");
+  QPixmap logoPix(":/logo.png");
+  if (logoPix.isNull())
+    logoPix.load("logo.png");
+  logoIcon->setPixmap(
+      logoPix.scaled(65, 65, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+  logoLayout->addWidget(logoIcon);
 
   QLabel *titleObj = new QLabel("TuniWaste");
-  titleObj->setStyleSheet(
-      "color: white; font-size: 24px; font-weight: bold; padding-left: 20px;");
-  layout->addWidget(titleObj);
-  layout->addSpacing(20);
+  titleObj->setStyleSheet("color: white; font-size: 26px; font-weight: bold; "
+                          "background: transparent;");
+  logoLayout->addWidget(titleObj);
+  logoLayout->addStretch();
+  layout->addWidget(logoContainer);
 
   QString btnStyle =
       "QPushButton { text-align: left; padding: 12px 20px; color: white; "
-      "background: transparent; border: none; font-size: 16px; }"
-      "QPushButton:hover { background-color: #388E3C; }";
+      "background: transparent; border: none; font-size: 15px; font-weight: "
+      "500; }"
+      "QPushButton:hover { background-color: #81C784; }";
 
   auto createBtn = [&](QString text, auto slot) {
     QPushButton *btn = new QPushButton(text);
@@ -242,25 +268,33 @@ QWidget *MainWindow::createSidebar() {
     layout->addWidget(btn);
   };
 
-  createBtn("🏠 Tableau de bord", &MainWindow::onDashboardClicked);
-  createBtn("👥 Utilisateurs", &MainWindow::onUsersClicked);
-  createBtn("🚛 Camions", &MainWindow::onTrucksClicked);
-  createBtn("🗑️ Poubelles", &MainWindow::onBinsClicked);
-  createBtn("📍 Zones", &MainWindow::onZonesClicked);
-  createBtn("♻️ Recyclage", &MainWindow::onRecycleClicked);
+  createBtn("Tableau de bord", &MainWindow::onDashboardClicked);
+  createBtn("Gestion des utilisateurs", &MainWindow::onUsersClicked);
+  createBtn("Gestion des camions", &MainWindow::onTrucksClicked);
+  createBtn("Gestion des zones", &MainWindow::onZonesClicked);
+  createBtn("Gestion des poubelles", &MainWindow::onBinsClicked);
+  createBtn("Gestion de recyclage", &MainWindow::onRecycleClicked);
+  createBtn("Rapports", &MainWindow::onReportsClicked);
+  createBtn("Paramètres", &MainWindow::onSettingsClicked);
 
   layout->addStretch();
 
-  QPushButton *logoutBtn = new QPushButton("🚪 Déconnexion");
-  logoutBtn->setStyleSheet(btnStyle);
-  connect(logoutBtn, &QPushButton::clicked, this, [this]() {
-    stackedWidget->setCurrentIndex(0);
-    emailEdit->clear();
-    passwordEdit->clear();
-  });
-  layout->addWidget(logoutBtn);
+  QLabel *userFooter = new QLabel("Ahmed");
+  userFooter->setStyleSheet(
+      "color: white; font-weight: bold; padding: 10px 20px; font-size: 14px;");
+  layout->addWidget(userFooter);
 
   return sidebar;
+}
+
+void MainWindow::onReportsClicked() {
+  QMessageBox::information(this, "Rapports",
+                           "Module Rapports en cours de développement.");
+}
+
+void MainWindow::onSettingsClicked() {
+  QMessageBox::information(this, "Paramètres",
+                           "Module Paramètres en cours de développement.");
 }
 
 // =========================================================
@@ -511,7 +545,7 @@ void MainWindow::createUserChartWidget() {
   layout->addWidget(statsBox);
 
   // 2. Chart (Pie)
-  QtCharts::QPieSeries *series = new QtCharts::QPieSeries();
+  QPieSeries *series = new QPieSeries();
   int adminCount = 0;
   int empCount = 0;
   for (const auto &u : users) {
@@ -533,14 +567,14 @@ void MainWindow::createUserChartWidget() {
     series->slices().at(1)->setLabelVisible(false);
   }
 
-  QtCharts::QChart *chart = new QtCharts::QChart();
+  QChart *chart = new QChart();
   chart->addSeries(series);
   chart->legend()->hide();
   chart->setBackgroundRoundness(0);
   chart->setMargins(QMargins(0, 0, 0, 0));
   chart->setBackgroundVisible(false);
 
-  QtCharts::QChartView *chartView = new QtCharts::QChartView(chart);
+  QChartView *chartView = new QChartView(chart);
   chartView->setRenderHint(QPainter::Antialiasing);
   chartView->setStyleSheet("background: transparent;");
 
@@ -780,16 +814,59 @@ void MainWindow::addStatBar(QVBoxLayout *layout, const QString &label,
 
 AddUserDialog::AddUserDialog(QWidget *parent, User *editUser)
     : QDialog(parent) {
-  // Basic implementation to satisfy linker if needed
-  nameEdit = new QLineEdit();
-  emailEdit = new QLineEdit();
-  phoneEdit = new QLineEdit();
-  roleCombo = new QComboBox();
+  setWindowTitle(editUser ? "Modifier l'utilisateur"
+                          : "Ajouter un utilisateur");
+  QVBoxLayout *layout = new QVBoxLayout(this);
+  QFormLayout *formLayout = new QFormLayout();
+
+  nameEdit = new QLineEdit(this);
+  emailEdit = new QLineEdit(this);
+  phoneEdit = new QLineEdit(this);
+  roleCombo = new QComboBox(this);
   roleCombo->addItems({"Employe", "Administrateur"});
+
+  if (editUser) {
+    nameEdit->setText(editUser->name);
+    emailEdit->setText(editUser->email);
+    phoneEdit->setText(editUser->phone);
+    roleCombo->setCurrentText(editUser->role);
+  }
+
+  formLayout->addRow("Nom:", nameEdit);
+  formLayout->addRow("Email:", emailEdit);
+  formLayout->addRow("Téléphone:", phoneEdit);
+  formLayout->addRow("Rôle:", roleCombo);
+
+  layout->addLayout(formLayout);
+
+  QHBoxLayout *btnLayout = new QHBoxLayout();
+  QPushButton *saveBtn = new QPushButton("Enregistrer", this);
+  QPushButton *cancelBtn = new QPushButton("Annuler", this);
+  connect(saveBtn, &QPushButton::clicked, this, &QDialog::accept);
+  connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
+  btnLayout->addWidget(saveBtn);
+  btnLayout->addWidget(cancelBtn);
+  layout->addLayout(btnLayout);
 }
 
 PasswordResetDialog::PasswordResetDialog(QWidget *parent) : QDialog(parent) {
-  emailEdit = new QLineEdit();
-  // Implementation kept minimal
+  setWindowTitle("Réinitialisation du mot de passe");
+  QVBoxLayout *layout = new QVBoxLayout(this);
+  layout->addWidget(
+      new QLabel("Entrez votre email pour réinitialiser le mot de passe:"));
+
+  emailEdit = new QLineEdit(this);
+  emailEdit->setPlaceholderText("email@example.com");
+  layout->addWidget(emailEdit);
+
+  QHBoxLayout *btnLayout = new QHBoxLayout();
+  QPushButton *resetBtn = new QPushButton("Réinitialiser", this);
+  QPushButton *cancelBtn = new QPushButton("Annuler", this);
+  connect(resetBtn, &QPushButton::clicked, this,
+          &PasswordResetDialog::onResetClicked);
+  connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
+  btnLayout->addWidget(resetBtn);
+  btnLayout->addWidget(cancelBtn);
+  layout->addLayout(btnLayout);
 }
 void PasswordResetDialog::onResetClicked() { accept(); }

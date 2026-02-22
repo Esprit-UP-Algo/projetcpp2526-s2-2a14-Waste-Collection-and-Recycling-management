@@ -11,19 +11,22 @@
 #include <QComboBox>
 #include <QVector>
 #include <QLabel>
+#include <QSqlQuery>
+#include <QSqlError>
+#include "database.h"
 
 struct User {
     int id;
-    QString firstName;     // Prénom
-    QString lastName;      // Nom
+    QString firstName;
+    QString lastName;
     QString email;
     QString phone;
     QString role;
-    QString gender;        // New: sexe (homme/femme)
-    QString city;          // New: ville
-    QString postalCode;    // New: code postal
-    QString photoPath;     // photo de profile path
-    QString password;      // Mot de passe
+    QString gender;
+    QString city;
+    QString postalCode;
+    QString photoPath;
+    QString password;
 };
 
 class PasswordResetDialog : public QDialog
@@ -51,24 +54,31 @@ public:
 
 private slots:
     void onLoginClicked();
-    void onSaveUserClicked();     // Changed from onAddUserClicked
+    void onSaveUserClicked();
     void onModifyUser(int row);
     void onDeleteUser(int row);
     void onForgotPasswordClicked();
     void onSearchTextChanged(const QString &text);
     void onSortByColumn(int column);
     void onExportPdfClicked();
-    void onBrowsePhotoClicked();  // New
-    void onClearFormClicked();    // New
+    void onBrowsePhotoClicked();
+    void onClearFormClicked();
 
 private:
     void setupLoginScreen();
     void setupUserManagementScreen();
     void updateUserTable();
     void filterAndSortUsers();
-    void clearForm();             // New
-    void loadUserToForm(const User &user); // New
+    void clearForm();
+    void loadUserToForm(const User &user);
     QWidget* createSidebar();
+
+    // Oracle DB methods — TUNIWASTE.UTILISATEUR
+    void loadUsersFromDB();
+    bool addUserToDB(const User &user);
+    bool updateUserInDB(const User &user);
+    bool deleteUserFromDB(int userId);
+    bool loginFromDB(const QString &email, const QString &password);
 
     QStackedWidget *stackedWidget;
     QTableWidget *userTable;
@@ -80,9 +90,8 @@ private:
     int currentSortColumn;
     Qt::SortOrder currentSortOrder;
 
-    // Form fields for the permanent form on top
-    QLineEdit *formFirstNameEdit;  // Prénom
-    QLineEdit *formLastNameEdit;   // Nom
+    QLineEdit *formFirstNameEdit;
+    QLineEdit *formLastNameEdit;
     QLineEdit *formEmailEdit;
     QLineEdit *formPhoneEdit;
     QComboBox *formRoleCombo;
@@ -90,9 +99,13 @@ private:
     QLineEdit *formCityEdit;
     QLineEdit *formPostalCodeEdit;
     QLabel *formPhotoLabel;
-    QLineEdit *formPasswordEdit;  // Mot de passe
+    QLineEdit *formPasswordEdit;
     QString formPhotoPath;
-    int editingUserId;  // -1 when adding new, otherwise the ID being edited
+    int editingUserId;
+
+    // Saved login fields to use in onLoginClicked
+    QLineEdit *loginEmailEdit;
+    QLineEdit *loginPasswordEdit;
 };
 
 #endif

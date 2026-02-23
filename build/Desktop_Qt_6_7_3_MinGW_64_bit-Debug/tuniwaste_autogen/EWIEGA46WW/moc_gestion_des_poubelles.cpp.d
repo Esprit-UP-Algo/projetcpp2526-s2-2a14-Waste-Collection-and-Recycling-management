@@ -159,6 +159,15 @@ C:/Users/eyae8/Documents/tuniwaste/build/Desktop_Qt_6_7_3_MinGW_64_bit-Debug/tun
   C:/Qt/6.7.3/mingw_64/include/QtGui/qvalidator.h \
   C:/Qt/6.7.3/mingw_64/include/QtGui/qwindowdefs.h \
   C:/Qt/6.7.3/mingw_64/include/QtGui/qwindowdefs_win.h \
+  C:/Qt/6.7.3/mingw_64/include/QtSql/QSqlDatabase \
+  C:/Qt/6.7.3/mingw_64/include/QtSql/QSqlError \
+  C:/Qt/6.7.3/mingw_64/include/QtSql/QSqlQuery \
+  C:/Qt/6.7.3/mingw_64/include/QtSql/qsqldatabase.h \
+  C:/Qt/6.7.3/mingw_64/include/QtSql/qsqlerror.h \
+  C:/Qt/6.7.3/mingw_64/include/QtSql/qsqlquery.h \
+  C:/Qt/6.7.3/mingw_64/include/QtSql/qtsql-config.h \
+  C:/Qt/6.7.3/mingw_64/include/QtSql/qtsqlexports.h \
+  C:/Qt/6.7.3/mingw_64/include/QtSql/qtsqlglobal.h \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QComboBox \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QLabel \
   C:/Qt/6.7.3/mingw_64/include/QtWidgets/QLineEdit \

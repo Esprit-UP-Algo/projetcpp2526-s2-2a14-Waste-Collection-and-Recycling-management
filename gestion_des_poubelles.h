@@ -10,6 +10,9 @@
 #include <QSpinBox>
 #include <QPainter>
 #include <QPainterPath>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
 
 // ============================================
 // NIVEAU DONUT CHART WIDGET
@@ -38,9 +41,7 @@ protected:
         painter.setRenderHint(QPainter::Antialiasing);
 
         int w = width();
-        int h = height();
 
-        // Titre
         QFont titleFont;
         titleFont.setPointSize(12);
         titleFont.setBold(true);
@@ -48,19 +49,17 @@ protected:
         painter.setPen(Qt::black);
         painter.drawText(10, 20, w - 20, 25, Qt::AlignLeft, "Niveau Moyen");
 
-        // Déterminer la couleur
         QColor donutColor;
         if (niveauMoyen >= 90) {
-            donutColor = QColor(244, 67, 54);  // Rouge
+            donutColor = QColor(244, 67, 54);
         } else if (niveauMoyen >= 70) {
-            donutColor = QColor(255, 193, 7);  // Jaune
+            donutColor = QColor(255, 193, 7);
         } else if (niveauMoyen >= 50) {
-            donutColor = QColor(255, 152, 0);  // Orange
+            donutColor = QColor(255, 152, 0);
         } else {
-            donutColor = QColor(76, 175, 80);  // Vert
+            donutColor = QColor(76, 175, 80);
         }
 
-        // Donut
         int centerX = w / 2;
         int centerY = 90;
         int outerRadius = 45;
@@ -69,7 +68,6 @@ protected:
         float used = (niveauMoyen * 360.0f) / 100.0f;
         float remaining = 360.0f - used;
 
-        // Part utilisée
         painter.setBrush(QBrush(donutColor));
         painter.setPen(Qt::NoPen);
 
@@ -82,7 +80,6 @@ protected:
         path.closeSubpath();
         painter.drawPath(path);
 
-        // Part non utilisée (gris clair)
         painter.setBrush(QBrush(QColor(230, 230, 230)));
 
         QPainterPath path2;
@@ -94,15 +91,13 @@ protected:
         path2.closeSubpath();
         painter.drawPath(path2);
 
-        // Texte au centre - Pourcentage en noir, même taille que les autres donuts (comme le "3")
         painter.setFont(QFont("Arial", 20, QFont::Bold));
-        painter.setPen(Qt::black);  // Texte en noir
+        painter.setPen(Qt::black);
         painter.drawText(centerX - 50, centerY - 15, 100, 30, Qt::AlignCenter,
                          QString::number(niveauMoyen) + "%");
 
-        // Légende (texte descriptif) - même position que les autres légendes
         painter.setFont(QFont("Arial", 9));
-        painter.setPen(Qt::black);  // Texte en noir, comme les autres légendes
+        painter.setPen(Qt::black);
         painter.drawText(10, 160, w - 20, 15, Qt::AlignCenter,
                          "Taux de remplissage moyen");
     }
@@ -111,9 +106,9 @@ private:
     int niveauMoyen;
 };
 
-class NiveauDonutChart;
-
-// Widget personnalisé pour les graphiques donut
+// ============================================
+// DONUT CHART WIDGET
+// ============================================
 class DonutChart : public QWidget
 {
     Q_OBJECT
@@ -131,6 +126,9 @@ private:
     int total;
 };
 
+// ============================================
+// MAIN WINDOW
+// ============================================
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -147,7 +145,6 @@ private slots:
     void onExporterPDFClicked();
     void onSearchChanged(const QString &text);
     void onEtatFilterChanged(int index);
-    void onTypeFilterChanged(int index);
     void updateCharts();
 
 private:
@@ -158,16 +155,16 @@ private:
     void createTablePanel();
     void createStatsPanel();
     void applyStyles();
-    void loadDummyData();
-    void addTableRow(const QString &capacite, int niveau, const QString &etat,
-                     const QString &idZone);
+    void loadDataFromDB();
+    void addTableRow(const QString &localisation, int niveau,
+                     const QString &etat, const QString &type, const QString &idZone);
 
     // Widgets principaux
     QWidget *centralWidget;
     QWidget *sidebar;
     QWidget *mainContent;
 
-    // Formulaire (gauche)
+    // Formulaire
     QWidget *formPanel;
     QLineEdit *localisationInput;
     QComboBox *typeCombo;
@@ -177,15 +174,14 @@ private:
     QLineEdit *idZoneInput;
     QPushButton *enregistrerBtn;
 
-    // Tableau (haut-centre)
+    // Tableau
     QWidget *tablePanel;
     QTableWidget *poubelleTable;
     QLineEdit *searchInput;
     QComboBox *etatFilterCombo;
-    QComboBox *typeFilterCombo;
     QPushButton *exportPdfBtn;
 
-    // Statistiques (bas-centre/droite)
+    // Statistiques
     QWidget *statsPanel;
     DonutChart *etatChart;
     DonutChart *typeChart;

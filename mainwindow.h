@@ -2,82 +2,118 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QTableWidget>
+#include <QWidget>
+#include <QLabel>
 #include <QPushButton>
 #include <QLineEdit>
-#include <QComboBox>
-#include <QLabel>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QSpinBox>
-#include <QGroupBox>
+#include <QComboBox>
+#include <QTableWidget>
+#include <QVector>
+#include <QPainter>
 
+// ══════════════════════════════════════════════════════════════
+//  DonutChart
+// ══════════════════════════════════════════════════════════════
+class DonutChart : public QWidget
+{
+    Q_OBJECT
+public:
+    struct Slice { QString label; double value; QColor color; };
+    explicit DonutChart(QWidget *parent = nullptr);
+    void setSlices(const QVector<Slice> &slices);
+    void setCenterText(const QString &text);
+    QSize sizeHint() const override { return QSize(160, 160); }
+protected:
+    void paintEvent(QPaintEvent *) override;
+private:
+    QVector<Slice> m_slices;
+    QString        m_center;
+};
+
+// ══════════════════════════════════════════════════════════════
+//  MainWindow
+// ══════════════════════════════════════════════════════════════
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:
-    void onAddTruck();
-    void onModifyTruck(int row);
-    void onDeleteTruck(int row);
-    void onMenuItemClicked();
-    void onSearchTextChanged(const QString &text);
-    void onFilterChanged(int index);
+    void onSave();
+    void onModify(int row);
+    void onDelete(int row);
+    void onSearchChanged(const QString &t);
+    void onStateFilterChanged(int i);
+    void onTypeFilterChanged(int i);
     void onExportPDF();
+    void onMenuClicked(int i);
 
 private:
-    // Main widgets
-    QWidget *centralWidget;
-    QWidget *sidebar;
-    QWidget *formPanel;
-    QWidget *mainContent;
+    // ── Widgets (créés dans buildUI()) ───────────────────────
+    QLabel          *logoIcon;
+    QLabel          *formTitleLbl;
+    QLineEdit       *idCamionInput;
+    QLineEdit       *locInput;
+    QLineEdit       *typeDechetInput;
+    QSpinBox        *capacityInput;
+    QSpinBox        *fillInput;
+    QLineEdit       *stateInput;
+    QLineEdit       *zoneInput;
+    QLineEdit       *driverInput;
+    QLineEdit       *phoneInput;
+    QPushButton     *saveBtn;
+    QTableWidget    *tableWidget;
+    QLineEdit       *searchBar;
+    QComboBox       *stateFilter;
+    QComboBox       *typeFilter;
+    QPushButton     *exportBtn;
+    DonutChart      *stateChart;
+    QLabel          *stateLegend;
+    DonutChart      *typeChart;
+    QLabel          *typeLegend;
+    DonutChart      *levelChart;
+    QLabel          *levelSubLabel;
+    QVector<QPushButton*> menuBtns;
 
-    // Table
-    QTableWidget *truckTable;
+    // ── Base de données ───────────────────────────────────────
+    bool creerTables();
+    void loadDataFromDB();
+    bool saveToDB   (const QString &idCamion, const QString &loc,
+                  const QString &cap,      const QString &fill,
+                  const QString &state,    const QString &type,
+                  const QString &zone,     const QString &driver,
+                  const QString &phone);
+    bool updateInDB (int id,
+                    const QString &idCamion, const QString &loc,
+                    const QString &cap,      const QString &fill,
+                    const QString &state,    const QString &type,
+                    const QString &zone,     const QString &driver,
+                    const QString &phone);
+    bool deleteFromDB(int id);
 
-    // Form inputs
-    QLineEdit *typeInput;
-    QSpinBox *capacityInput;
-    QComboBox *statusCombo;
-    QLineEdit *locationInput;
-    QPushButton *saveButton;
-    QLabel *formTitleLabel;
-
-    // Buttons
-    QVector<QPushButton*> menuButtons;
-    QPushButton *exportPdfButton;
-
-    // Chart
-    QWidget *chartWidget;
-
-    // Search and filters
-    QLineEdit *searchInput;
-    QComboBox *statusFilter;
-    QComboBox *typeFilter;
-
-    // Data
+    // ── État interne ──────────────────────────────────────────
     int nextId;
-    int currentEditingRow;
+    int editRow;
+    int currentDbId;
 
-    // Helper methods
-    void setupUI();
-    void createSidebar();
-    void createFormPanel();
-    void createMainContent();
-    void createChartWidget();
-    void loadTruckData();
+    // ── Helpers ───────────────────────────────────────────────
+    void buildUI();
+    void loadData();
+    void addRow(int id,
+                const QString &idCamion, const QString &loc,
+                const QString &cap,      const QString &fill,
+                const QString &state,    const QString &type,
+                const QString &zone,     const QString &driver,
+                const QString &phone);
+    void updateCharts();
+    QString stateStyle(const QString &s);
+    void clearForm();
+    void fillForm(int row);
     void applyStyles();
-    void addTableRow(int id, const QString &type, const QString &capacity,
-                     const QString &status, const QString &location);
-    QString getStatusStyle(const QString &status);
-    void clearFormInputs();
-    void setFormForEditing(int row);
-    void updateChartData();
-    void addStatBar(QVBoxLayout *layout, const QString &label, int count, int total, const QString &color);
 };
 
 #endif // MAINWINDOW_H

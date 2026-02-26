@@ -11,28 +11,28 @@
 #include <QComboBox>
 #include <QVector>
 #include <QLabel>
-#include <QSqlQuery>
-#include <QSqlError>
-#include "database.h"
+#include <QRegularExpression>
+#include "utilisateur.h"
 
-struct User {
-    int id;
-    QString firstName;
-    QString lastName;
+// ── Structure locale pour la table en mémoire (cache depuis BD) ──────────────
+struct UserRow {
+    int     id;
+    QString prenom;
+    QString nom;
     QString email;
-    QString phone;
+    QString telephone;
     QString role;
-    QString gender;
-    QString city;
-    QString postalCode;
-    QString photoPath;
-    QString password;
+    QString sexe;
+    QString ville;
+    QString codePostal;
+    QString photo;
+    QString motDePasse;
 };
 
+// ── Dialog réinitialisation mot de passe ─────────────────────────────────────
 class PasswordResetDialog : public QDialog
 {
     Q_OBJECT
-
 public:
     explicit PasswordResetDialog(QWidget *parent = nullptr);
     QString getEmail() const { return emailEdit->text(); }
@@ -44,6 +44,7 @@ private:
     QLineEdit *emailEdit;
 };
 
+// ── Fenêtre principale ────────────────────────────────────────────────────────
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -67,29 +68,29 @@ private slots:
 private:
     void setupLoginScreen();
     void setupUserManagementScreen();
-    void updateUserTable();
+    void refreshTable();           // charge depuis BD et reaffiche
+    void updateUserTable();        // remplit le QTableWidget depuis filteredUsers
     void filterAndSortUsers();
     void clearForm();
-    void loadUserToForm(const User &user);
+    void loadUserToForm(const UserRow &user);
     QWidget* createSidebar();
 
-    // Oracle DB methods — TUNIWASTE.UTILISATEUR
-    void loadUsersFromDB();
-    bool addUserToDB(const User &user);
-    bool updateUserInDB(const User &user);
-    bool deleteUserFromDB(int userId);
-    bool loginFromDB(const QString &email, const QString &password);
+    // Modèle (patron Modèle-Vue)
+    Utilisateur Utmp;
+
+    // Cache local chargé depuis la BD
+    QVector<UserRow> users;
+    QVector<UserRow> filteredUsers;
 
     QStackedWidget *stackedWidget;
-    QTableWidget *userTable;
-    QVector<User> users;
-    QVector<User> filteredUsers;
-    int nextUserId;
-    QLineEdit *searchEdit;
-    QComboBox *roleFilter;
-    int currentSortColumn;
-    Qt::SortOrder currentSortOrder;
+    QTableWidget   *userTable;
+    QLineEdit      *searchEdit;
+    QComboBox      *roleFilter;
+    int             currentSortColumn;
+    Qt::SortOrder   currentSortOrder;
+    int             editingUserId;
 
+    // Champs du formulaire
     QLineEdit *formFirstNameEdit;
     QLineEdit *formLastNameEdit;
     QLineEdit *formEmailEdit;
@@ -98,14 +99,13 @@ private:
     QComboBox *formGenderCombo;
     QLineEdit *formCityEdit;
     QLineEdit *formPostalCodeEdit;
-    QLabel *formPhotoLabel;
+    QLabel    *formPhotoLabel;
     QLineEdit *formPasswordEdit;
-    QString formPhotoPath;
-    int editingUserId;
+    QString    formPhotoPath;
 
-    // Saved login fields to use in onLoginClicked
+    // Champs login (pour validation)
     QLineEdit *loginEmailEdit;
     QLineEdit *loginPasswordEdit;
 };
 
-#endif
+#endif // MAINWINDOW_H

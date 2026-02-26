@@ -1,12 +1,24 @@
 #include "database.h"
 
-QSqlDatabase Database::db;
+// Variable locale statique = créée UNE SEULE FOIS, thread-safe (C++11)
+Database& Database::getInstance()
+{
+    static Database instance;
+    return instance;
+}
 
 bool Database::connect()
 {
-    db = QSqlDatabase::addDatabase("QODBC");
+    if (db.isOpen()) {
+        qDebug() << "[Database] Déjà connecté.";
+        return true;
+    }
 
-    // Driver exact : "Oracle in XE" (confirmé dans ODBC)
+    // Tentative 1 : driver XEClient
+    if (QSqlDatabase::contains("TUNIWASTE_CONN"))
+        QSqlDatabase::removeDatabase("TUNIWASTE_CONN");
+
+    db = QSqlDatabase::addDatabase("QODBC", "TUNIWASTE_CONN");
     db.setDatabaseName(
         "Driver={Oracle in XE};"
         "DBQ=localhost:1521/XE;"
@@ -14,29 +26,41 @@ bool Database::connect()
         "Pwd=tuni123;"
         );
 
-    if (!db.open()) {
-        qDebug() << "ERREUR connexion ODBC Oracle:" << db.lastError().text();
-        return false;
+    if (db.open()) {
+        qDebug() << "[Database] ✔ Connexion Oracle réussie (Oracle in XE)";
+        return true;
     }
+    qDebug() << "[Database] ✘ Oracle in XE échoué :" << db.lastError().text();
 
-    qDebug() << "Connexion ODBC Oracle reussie - TUNIWASTE";
-    return true;
+    // Tentative 2 : via DSN nommé TUNIWASTE (configuré dans ODBC)
+    QSqlDatabase::removeDatabase("TUNIWASTE_CONN");
+    db = QSqlDatabase::addDatabase("QODBC", "TUNIWASTE_CONN");
+    db.setDatabaseName("TUNIWASTE");
+
+    if (db.open()) {
+        qDebug() << "[Database] ✔ Connexion Oracle réussie (DSN TUNIWASTE)";
+        return true;
+    }
+    qDebug() << "[Database] ✘ DSN TUNIWASTE échoué :" << db.lastError().text();
+
+    return false;
 }
 
 void Database::disconnect()
 {
     if (db.isOpen()) {
         db.close();
-        qDebug() << "Deconnexion effectuee.";
+        QSqlDatabase::removeDatabase("TUNIWASTE_CONN");
+        qDebug() << "[Database] Déconnexion effectuée.";
     }
 }
 
-bool Database::isConnected()
+bool Database::isConnected() const
 {
     return db.isOpen();
 }
 
-QSqlDatabase Database::getDatabase()
+QSqlDatabase Database::getDatabase() const
 {
     return db;
 }

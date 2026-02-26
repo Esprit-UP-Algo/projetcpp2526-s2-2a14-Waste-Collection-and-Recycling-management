@@ -1,5 +1,4 @@
 <RCC>
     <qresource prefix="/">
-        <file>magee.png</file>
     </qresource>
 </RCC>

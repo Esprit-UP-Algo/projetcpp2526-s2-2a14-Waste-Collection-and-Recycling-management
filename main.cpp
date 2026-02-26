@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    // Vérifie QODBC (pas QOCI)
+    // Vérifier que QODBC est disponible
     if (!QSqlDatabase::isDriverAvailable("QODBC")) {
         QMessageBox::critical(nullptr,
                               "Driver ODBC manquant",
@@ -18,14 +18,14 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    // Connexion Oracle via ODBC
-    if (!Database::connect()) {
+    // Connexion via Singleton (une seule instance dans tout le projet)
+    if (!Database::getInstance().connect()) {
         QMessageBox::critical(nullptr,
                               "Erreur de connexion Oracle",
                               "Impossible de se connecter à Oracle.\n\n"
                               "Vérifiez que :\n"
                               "1. Oracle XE est démarré\n"
-                              "2. Le DSN TUNIWASTE existe dans ODBC\n"
+                              "2. Le driver ODBC Oracle est installé\n"
                               "3. Le mot de passe est correct (tuni123)");
         return -1;
     }
@@ -35,6 +35,9 @@ int main(int argc, char *argv[])
     window.show();
 
     int result = app.exec();
-    Database::disconnect();
+
+    // Déconnexion propre à la fermeture
+    Database::getInstance().disconnect();
+
     return result;
 }

@@ -1,0 +1,20 @@
+# Build Qt / C++
+build/
+*.o
+*.obj
+*.exe
+
+# Qt generated
+moc_*
+ui_*
+qrc_*
+
+# IDE files
+*.pro.user
+*.user
+*.autosave
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

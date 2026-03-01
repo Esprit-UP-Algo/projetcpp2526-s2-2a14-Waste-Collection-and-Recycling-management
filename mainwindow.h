@@ -11,6 +11,7 @@
 #include <QTableWidget>
 #include <QVector>
 #include <QPainter>
+#include <QSqlQuery>
 
 // ══════════════════════════════════════════════════════════════
 //  DonutChart
@@ -62,7 +63,8 @@ private:
     QSpinBox        *capacityInput;
     QSpinBox        *fillInput;
     QLineEdit       *stateInput;
-    QLineEdit       *zoneInput;
+    QComboBox       *typeCamionCombo;
+    QComboBox       *zoneCombo;
     QLineEdit       *driverInput;
     QLineEdit       *phoneInput;
     QPushButton     *saveBtn;
@@ -82,17 +84,18 @@ private:
     // ── Base de données ───────────────────────────────────────
     bool creerTables();
     void loadDataFromDB();
-    bool saveToDB   (const QString &idCamion, const QString &loc,
-                  const QString &cap,      const QString &fill,
-                  const QString &state,    const QString &type,
-                  const QString &zone,     const QString &driver,
-                  const QString &phone);
+    void chargerZones();
+    bool saveToDB   (const QString &idCamion, const QString &typeCamion,
+                  const QString &loc,      const QString &cap,
+                  const QString &fill,     const QString &state,
+                  const QString &typeDechet, const QString &idZone,
+                  const QString &driver,   const QString &phone);
     bool updateInDB (int id,
-                    const QString &idCamion, const QString &loc,
-                    const QString &cap,      const QString &fill,
-                    const QString &state,    const QString &type,
-                    const QString &zone,     const QString &driver,
-                    const QString &phone);
+                    const QString &idCamion, const QString &typeCamion,
+                    const QString &loc,      const QString &cap,
+                    const QString &fill,     const QString &state,
+                    const QString &typeDechet, const QString &idZone,
+                    const QString &driver,   const QString &phone);
     bool deleteFromDB(int id);
 
     // ── État interne ──────────────────────────────────────────
@@ -104,11 +107,11 @@ private:
     void buildUI();
     void loadData();
     void addRow(int id,
-                const QString &idCamion, const QString &loc,
-                const QString &cap,      const QString &fill,
-                const QString &state,    const QString &type,
-                const QString &zone,     const QString &driver,
-                const QString &phone);
+                const QString &idCamion, const QString &typeCamion,
+                const QString &loc,      const QString &cap,
+                const QString &fill,     const QString &state,
+                const QString &typeDechet, const QString &idZone,
+                const QString &driver,   const QString &phone);
     void updateCharts();
     QString stateStyle(const QString &s);
     void clearForm();

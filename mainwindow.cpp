@@ -85,6 +85,7 @@ MainWindow::MainWindow(QWidget *parent)
     creerTables();
     buildUI();
     applyStyles();
+    chargerZones();
     loadData();
 }
 
@@ -124,33 +125,21 @@ void MainWindow::buildUI()
     logoLayout->setSpacing(12);
 
     logoIcon = new QLabel();
-    logoIcon->setFixedSize(52, 52);
+    logoIcon->setFixedSize(80, 80);
     logoIcon->setObjectName("logoIcon");
     logoIcon->setAlignment(Qt::AlignCenter);
 
-    // Chercher logo.png dans tous les endroits possibles
-    QPixmap px;
-    QStringList paths = {
-        "C:/Users/user/Documents/tuniwaste2/logo.png",
-        QCoreApplication::applicationDirPath() + "/logo.png",
-        QCoreApplication::applicationDirPath() + "/../logo.png",
-        QCoreApplication::applicationDirPath() + "/../../logo.png",
-        QCoreApplication::applicationDirPath() + "/../../../logo.png",
-        QDir::currentPath() + "/logo.png"
-    };
-    for (const QString &pp : paths) {
-        px = QPixmap(pp);
-        if (!px.isNull()) { qDebug() << "[Logo] trouve:" << pp; break; }
-    }
+    // Logo depuis le fichier PNG du projet (supporte la transparence)
+    QString logoPath = QCoreApplication::applicationDirPath() + "/../logo.png";
+    if (!QFile::exists(logoPath))
+        logoPath = "C:/Users/user/Desktop/tuniwaste2/logo.png";
+    QPixmap px(logoPath);
     if (!px.isNull()) {
-        logoIcon->setPixmap(px.scaled(52, 52, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        logoIcon->setPixmap(px.scaled(80, 80, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         logoIcon->setStyleSheet("background:transparent;");
     } else {
-        qDebug() << "[Logo] non trouve, fallback";
-        logoIcon->setText("♻");
-        logoIcon->setStyleSheet("font-size:26px; color:white; background:transparent;");
+        logoIcon->setStyleSheet("background:#81C784; border-radius:24px;");
     }
-
     QLabel *logoText = new QLabel("TuniWaste");
     logoText->setObjectName("logoText");
     logoLayout->addWidget(logoIcon);
@@ -298,9 +287,19 @@ void MainWindow::buildUI()
     stateInput->setText("Operationnelle");
     formLayout->addWidget(stateInput);
 
+    formLayout->addWidget(mkLbl("Type de camion"));
+    typeCamionCombo = new QComboBox();
+    typeCamionCombo->setObjectName("typeCamionCombo");
+    typeCamionCombo->setFixedHeight(36);
+    typeCamionCombo->addItems({"Benne", "Compacteur", "Plateau", "Citerne", "Remorque", "Autre"});
+    formLayout->addWidget(typeCamionCombo);
+
     formLayout->addWidget(mkLbl("Zone"));
-    mkInput(zoneInput, "zoneInput", "Ex: Zone Nord");
-    formLayout->addWidget(zoneInput);
+    zoneCombo = new QComboBox();
+    zoneCombo->setObjectName("zoneCombo");
+    zoneCombo->setFixedHeight(36);
+    zoneCombo->addItem("-- Choisir une zone --", -1);
+    formLayout->addWidget(zoneCombo);
 
     formLayout->addWidget(mkLbl("Chauffeur"));
     mkInput(driverInput, "driverInput", "Nom du chauffeur");
@@ -384,19 +383,20 @@ void MainWindow::buildUI()
     searchRow->addWidget(typeFilter, 1);
     rightLayout->addLayout(searchRow);
 
-    tableWidget = new QTableWidget(0, 10);
+    tableWidget = new QTableWidget(0, 12);
     tableWidget->setObjectName("tableWidget");
-    tableWidget->setHorizontalHeaderLabels({"#","ID Camion","Capacite","Niveau","Etat","Type","Zone","Chauffeur","Telephone","Actions"});
+    tableWidget->setHorizontalHeaderLabels({"#","ID Camion","Type Camion","Capacite","Niveau","Etat","Type Dechet","Zone","Chauffeur","Telephone","Localisation","Actions"});
     tableWidget->horizontalHeader()->setStretchLastSection(true);
     tableWidget->verticalHeader()->setVisible(false);
     tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     tableWidget->setShowGrid(false);
-    tableWidget->setColumnWidth(0,35); tableWidget->setColumnWidth(1,90);
-    tableWidget->setColumnWidth(2,80); tableWidget->setColumnWidth(3,70);
-    tableWidget->setColumnWidth(4,110); tableWidget->setColumnWidth(5,95);
-    tableWidget->setColumnWidth(6,95); tableWidget->setColumnWidth(7,115);
-    tableWidget->setColumnWidth(8,115);
+    tableWidget->setColumnWidth(0,35);  tableWidget->setColumnWidth(1,90);
+    tableWidget->setColumnWidth(2,100); tableWidget->setColumnWidth(3,80);
+    tableWidget->setColumnWidth(4,70);  tableWidget->setColumnWidth(5,110);
+    tableWidget->setColumnWidth(6,95);  tableWidget->setColumnWidth(7,90);
+    tableWidget->setColumnWidth(8,115); tableWidget->setColumnWidth(9,115);
+    tableWidget->setColumnHidden(10, true); // Localisation cachée mais gardée pour fillForm
     rightLayout->addWidget(tableWidget, 1);
 
     QLabel *statsTitle = new QLabel("Statistiques en temps reel");
@@ -456,6 +456,7 @@ bool MainWindow::creerTables()
             CREATE TABLE CAMIONS (
                 ID           NUMBER        PRIMARY KEY,
                 ID_CAMION    VARCHAR2(50)  NOT NULL,
+                TYPE_CAMION  VARCHAR2(50),
                 LOCALISATION VARCHAR2(200),
                 CAPACITE     VARCHAR2(50),
                 NIVEAU       VARCHAR2(50),
@@ -468,9 +469,50 @@ bool MainWindow::creerTables()
             )
         )");
         if (!ok) { qDebug() << "[DB] Erreur creation table:" << q.lastError().text(); return false; }
-        q.exec("CREATE SEQUENCE camions_seq START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE");
+
+        // Crée la séquence seulement si elle n'existe pas encore
+        QSqlQuery seqCheck(Database::instance().bd());
+        seqCheck.exec("SELECT sequence_name FROM user_sequences WHERE sequence_name = 'CAMIONS_SEQ'");
+        if (!seqCheck.next()) {
+            q.exec("CREATE SEQUENCE camions_seq START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE");
+        }
+    } else {
+        // Table existe déjà — ajouter TYPE_CAMION si elle manque
+        QSqlQuery colCheck(Database::instance().bd());
+        colCheck.exec("SELECT column_name FROM user_tab_columns WHERE table_name='CAMIONS' AND column_name='TYPE_CAMION'");
+        if (!colCheck.next()) {
+            QSqlQuery alter(Database::instance().bd());
+            alter.exec("ALTER TABLE CAMIONS ADD (TYPE_CAMION VARCHAR2(50))");
+        }
     }
     return true;
+}
+
+// ════════════════════════════════════════════════
+//  chargerZones — Popule le ComboBox Zone
+// ════════════════════════════════════════════════
+void MainWindow::chargerZones()
+{
+    zoneCombo->clear();
+    zoneCombo->addItem("-- Choisir une zone --", -1);
+    auto zones = Database::instance().chargerZones();
+    if (zones.isEmpty()) {
+        // Récupère l'erreur brute pour aider au diagnostic
+        QSqlQuery diagQ(Database::instance().bd());
+        diagQ.exec("SELECT COUNT(*) FROM ZONE");
+        QString erreur = diagQ.lastError().text();
+        if (erreur.isEmpty()) {
+            diagQ.exec("SELECT COUNT(*) FROM TUNIWASTE.ZONE");
+            erreur = diagQ.lastError().text();
+        }
+        QMessageBox::warning(this, "Zones non chargees",
+            "Impossible de charger les zones depuis la base de donnees.\n\n"
+            "Erreur Oracle : " + (erreur.isEmpty() ? "(aucune erreur SQL, table peut-etre vide)" : erreur) + "\n\n"
+            "Verifiez que la table ZONE est accessible avec l'utilisateur connecte.");
+    } else {
+        for (auto &z : zones)
+            zoneCombo->addItem(z.second, z.first); // affiche NOM_ZONE, stocke ID_ZONE
+    }
 }
 
 void MainWindow::loadDataFromDB()
@@ -483,6 +525,7 @@ void MainWindow::loadDataFromDB()
         if (id > maxId) maxId = id;
         addRow(id,
                q.value("ID_CAMION").toString(),
+               q.value("TYPE_CAMION").toString(),
                q.value("LOCALISATION").toString(),
                q.value("CAPACITE").toString(),
                q.value("NIVEAU").toString(),
@@ -496,23 +539,25 @@ void MainWindow::loadDataFromDB()
     updateCharts();
 }
 
-bool MainWindow::saveToDB(const QString &idCamion, const QString &loc,
-                          const QString &cap, const QString &fill,
-                          const QString &state, const QString &type,
-                          const QString &zone, const QString &driver,
+bool MainWindow::saveToDB(const QString &idCamion, const QString &typeCamion,
+                          const QString &loc,
+                          const QString &cap,     const QString &fill,
+                          const QString &state,   const QString &typeDechet,
+                          const QString &idZone,  const QString &driver,
                           const QString &phone)
 {
-    return Database::instance().insertCamion(idCamion, loc, cap, fill, state, type, zone, driver, phone);
+    return Database::instance().insertCamion(idCamion, typeCamion, loc, cap, fill, state, typeDechet, idZone, driver, phone);
 }
 
 bool MainWindow::updateInDB(int id,
-                            const QString &idCamion, const QString &loc,
-                            const QString &cap, const QString &fill,
-                            const QString &state, const QString &type,
-                            const QString &zone, const QString &driver,
+                            const QString &idCamion, const QString &typeCamion,
+                            const QString &loc,
+                            const QString &cap,     const QString &fill,
+                            const QString &state,   const QString &typeDechet,
+                            const QString &idZone,  const QString &driver,
                             const QString &phone)
 {
-    return Database::instance().updateCamion(id, idCamion, loc, cap, fill, state, type, zone, driver, phone);
+    return Database::instance().updateCamion(id, idCamion, typeCamion, loc, cap, fill, state, typeDechet, idZone, driver, phone);
 }
 
 bool MainWindow::deleteFromDB(int id)
@@ -523,13 +568,12 @@ bool MainWindow::deleteFromDB(int id)
 void MainWindow::loadData() { loadDataFromDB(); }
 
 void MainWindow::addRow(int id,
-                        const QString &idCamion, const QString &loc,
-                        const QString &cap, const QString &fill,
-                        const QString &state, const QString &type,
-                        const QString &zone, const QString &driver,
-                        const QString &phone)
+                        const QString &idCamion, const QString &typeCamion,
+                        const QString &loc,      const QString &cap,
+                        const QString &fill,     const QString &state,
+                        const QString &typeDechet, const QString &idZone,
+                        const QString &driver,   const QString &phone)
 {
-    Q_UNUSED(loc)
     int row = tableWidget->rowCount();
     tableWidget->insertRow(row);
     auto mkItem = [](const QString &t) {
@@ -537,19 +581,36 @@ void MainWindow::addRow(int id,
         it->setTextAlignment(Qt::AlignVCenter | Qt::AlignLeft);
         return it;
     };
-    tableWidget->setItem(row, 0, mkItem(QString::number(id)));
-    tableWidget->setItem(row, 1, mkItem(idCamion));
-    tableWidget->setItem(row, 2, mkItem(cap));
-    tableWidget->setItem(row, 3, mkItem(fill));
-    tableWidget->setItem(row, 5, mkItem(type));
-    tableWidget->setItem(row, 6, mkItem(zone));
-    tableWidget->setItem(row, 7, mkItem(driver));
-    tableWidget->setItem(row, 8, mkItem(phone));
+    // Col: 0=#, 1=ID_CAMION, 2=TYPE_CAMION, 3=CAPACITE, 4=NIVEAU,
+    //      5=ETAT(badge), 6=TYPE_DECHET, 7=ZONE(NOM), 8=CHAUFFEUR,
+    //      9=TELEPHONE, 10=LOCALISATION(caché), 11=ACTIONS
+    tableWidget->setItem(row, 0,  mkItem(QString::number(id)));
+    tableWidget->setItem(row, 1,  mkItem(idCamion));
+    tableWidget->setItem(row, 2,  mkItem(typeCamion));
+    tableWidget->setItem(row, 3,  mkItem(cap));
+    tableWidget->setItem(row, 4,  mkItem(fill));
+    // Zone : afficher le nom si ID_ZONE est numérique, sinon afficher tel quel
+    QString zoneName = idZone;
+    bool ok;
+    int zId = idZone.toInt(&ok);
+    if (ok) {
+        for (int i = 1; i < zoneCombo->count(); ++i) {
+            if (zoneCombo->itemData(i).toInt() == zId) {
+                zoneName = zoneCombo->itemText(i);
+                break;
+            }
+        }
+    }
+    tableWidget->setItem(row, 6,  mkItem(typeDechet));
+    tableWidget->setItem(row, 7,  mkItem(zoneName));
+    tableWidget->setItem(row, 8,  mkItem(driver));
+    tableWidget->setItem(row, 9,  mkItem(phone));
+    tableWidget->setItem(row, 10, mkItem(loc)); // localisation cachée
 
     QLabel *badge = new QLabel(state);
     badge->setAlignment(Qt::AlignCenter);
     badge->setStyleSheet(stateStyle(state));
-    tableWidget->setCellWidget(row, 4, badge);
+    tableWidget->setCellWidget(row, 5, badge);
 
     QWidget *actW = new QWidget();
     actW->setStyleSheet("background:white;");
@@ -564,7 +625,7 @@ void MainWindow::addRow(int id,
     delBtn->setStyleSheet("QPushButton{background:#F44336;color:white;border:none;border-radius:4px;font-size:11px;font-weight:bold;padding:0 8px;}QPushButton:hover{background:#C62828;}");
     connect(delBtn, &QPushButton::clicked, [this, row](){ onDelete(row); });
     al->addWidget(modBtn); al->addWidget(delBtn); al->addStretch();
-    tableWidget->setCellWidget(row, 9, actW);
+    tableWidget->setCellWidget(row, 11, actW);
     tableWidget->setRowHeight(row, 50);
 }
 
@@ -574,11 +635,11 @@ void MainWindow::updateCharts()
     double totalFill = 0;
     int rows = tableWidget->rowCount();
     for (int r = 0; r < rows; ++r) {
-        QLabel *bl = qobject_cast<QLabel*>(tableWidget->cellWidget(r, 4));
+        QLabel *bl = qobject_cast<QLabel*>(tableWidget->cellWidget(r, 5));
         if (bl) stateCount[bl->text()]++;
-        if (tableWidget->item(r, 5)) typeCount[tableWidget->item(r, 5)->text()]++;
-        if (tableWidget->item(r, 3)) {
-            QString f = tableWidget->item(r, 3)->text();
+        if (tableWidget->item(r, 6)) typeCount[tableWidget->item(r, 6)->text()]++;
+        if (tableWidget->item(r, 4)) {
+            QString f = tableWidget->item(r, 4)->text();
             f.remove("%"); totalFill += f.trimmed().toDouble();
         }
     }
@@ -629,7 +690,9 @@ void MainWindow::clearForm()
     typeDechetInput->setText("Plastique");
     capacityInput->setValue(240); fillInput->setValue(0);
     stateInput->setText("Operationnelle");
-    zoneInput->clear(); driverInput->clear(); phoneInput->clear();
+    typeCamionCombo->setCurrentIndex(0);
+    zoneCombo->setCurrentIndex(0);
+    driverInput->clear(); phoneInput->clear();
     formTitleLbl->setText("Ajouter un camion");
     saveBtn->setText("Enregistrer");
 }
@@ -639,17 +702,32 @@ void MainWindow::fillForm(int row)
     editRow = row;
     currentDbId = tableWidget->item(row, 0)->text().toInt();
     idCamionInput->setText(tableWidget->item(row, 1) ? tableWidget->item(row, 1)->text() : "");
-    QString c = tableWidget->item(row, 2) ? tableWidget->item(row, 2)->text() : "240";
+    // TYPE_CAMION (col 2)
+    QString tc = tableWidget->item(row, 2) ? tableWidget->item(row, 2)->text() : "";
+    int tci = typeCamionCombo->findText(tc);
+    typeCamionCombo->setCurrentIndex(tci >= 0 ? tci : 0);
+    // CAPACITE (col 3)
+    QString c = tableWidget->item(row, 3) ? tableWidget->item(row, 3)->text() : "240";
     c.remove(" L"); capacityInput->setValue(c.trimmed().toInt());
-    QString f = tableWidget->item(row, 3) ? tableWidget->item(row, 3)->text() : "0";
+    // NIVEAU (col 4)
+    QString f = tableWidget->item(row, 4) ? tableWidget->item(row, 4)->text() : "0";
     f.remove("%"); fillInput->setValue(f.trimmed().toInt());
-    QLabel *bl = qobject_cast<QLabel*>(tableWidget->cellWidget(row, 4));
+    // ETAT badge (col 5)
+    QLabel *bl = qobject_cast<QLabel*>(tableWidget->cellWidget(row, 5));
     stateInput->setText(bl ? bl->text() : "");
-    typeDechetInput->setText(tableWidget->item(row, 5) ? tableWidget->item(row, 5)->text() : "");
-    zoneInput->setText(tableWidget->item(row, 6) ? tableWidget->item(row, 6)->text() : "");
-    driverInput->setText(tableWidget->item(row, 7) ? tableWidget->item(row, 7)->text() : "");
-    phoneInput->setText(tableWidget->item(row, 8) ? tableWidget->item(row, 8)->text() : "");
-    locInput->setText(tableWidget->item(row, 6) ? tableWidget->item(row, 6)->text() : "");
+    // TYPE_DECHET (col 6)
+    typeDechetInput->setText(tableWidget->item(row, 6) ? tableWidget->item(row, 6)->text() : "");
+    // ZONE (col 7) — retrouver l'ID_ZONE stocké pour sélectionner dans le combo
+    // On stocke le nom dans col 7; on retrouve le bon index par rematch du nom
+    QString zoneName = tableWidget->item(row, 7) ? tableWidget->item(row, 7)->text() : "";
+    int zi = zoneCombo->findText(zoneName);
+    zoneCombo->setCurrentIndex(zi >= 0 ? zi : 0);
+    // CHAUFFEUR (col 8)
+    driverInput->setText(tableWidget->item(row, 8) ? tableWidget->item(row, 8)->text() : "");
+    // TELEPHONE (col 9)
+    phoneInput->setText(tableWidget->item(row, 9) ? tableWidget->item(row, 9)->text() : "");
+    // LOCALISATION (col 10 caché)
+    locInput->setText(tableWidget->item(row, 10) ? tableWidget->item(row, 10)->text() : "");
     formTitleLbl->setText("Modifier camion #" + tableWidget->item(row, 0)->text());
     saveBtn->setText("Mettre a jour");
 }
@@ -674,7 +752,7 @@ QMainWindow, QWidget {
         stop:0 #43A047, stop:1 #2E7D32);
 }
 
-#logoArea { background: rgba(0,0,0,0.22); }
+#logoArea { background: transparent; }
 
 #logoText {
     color: white;
@@ -682,6 +760,7 @@ QMainWindow, QWidget {
     font-weight: bold;
     background: transparent;
 }
+QLabel { color:#212121; font-size:13px; font-weight:bold; }
 
 #menuBtn0,#menuBtn1,#menuBtn2,#menuBtn3,
 #menuBtn4,#menuBtn5,#menuBtn6,#menuBtn7 {
@@ -914,41 +993,48 @@ void MainWindow::onMenuClicked(int index)
 
 void MainWindow::onSave()
 {
-    QString idCam  = idCamionInput->text().trimmed();
-    QString loc    = locInput->text().trimmed();
-    QString type   = typeDechetInput->text().trimmed();
-    QString state  = stateInput->text().trimmed();
-    QString zone   = zoneInput->text().trimmed();
-    QString driver = driverInput->text().trimmed();
-    QString phone  = phoneInput->text().trimmed();
+    QString idCam      = idCamionInput->text().trimmed();
+    QString loc        = locInput->text().trimmed();
+    QString typeDechet = typeDechetInput->text().trimmed();
+    QString state      = stateInput->text().trimmed();
+    QString typeCam    = typeCamionCombo->currentText();
+    QString idZone     = zoneCombo->currentData().toString();  // valeur = ID_ZONE
+    QString driver     = driverInput->text().trimmed();
+    QString phone      = phoneInput->text().trimmed();
 
-    if (idCam.isEmpty() || loc.isEmpty() || type.isEmpty() || driver.isEmpty() || phone.isEmpty()) {
+    if (idCam.isEmpty() || loc.isEmpty() || typeDechet.isEmpty() || driver.isEmpty() || phone.isEmpty()) {
         QMessageBox::warning(this, "Champs manquants",
-                             "Remplissez : ID Camion, Localisation, Type, Chauffeur et Telephone.");
+                             "Remplissez : ID Camion, Localisation, Type dechet, Chauffeur et Telephone.");
+        return;
+    }
+    if (zoneCombo->currentData().toInt() == -1) {
+        QMessageBox::warning(this, "Zone manquante", "Veuillez choisir une zone.");
         return;
     }
     QString cap  = QString::number(capacityInput->value()) + " L";
     QString fill = QString::number(fillInput->value()) + "%";
 
     if (editRow >= 0) {
-        if (updateInDB(currentDbId, idCam, loc, cap, fill, state, type, zone, driver, phone)) {
+        if (updateInDB(currentDbId, idCam, typeCam, loc, cap, fill, state, typeDechet, idZone, driver, phone)) {
             tableWidget->item(editRow, 1)->setText(idCam);
-            tableWidget->item(editRow, 2)->setText(cap);
-            tableWidget->item(editRow, 3)->setText(fill);
-            tableWidget->item(editRow, 5)->setText(type);
-            tableWidget->item(editRow, 6)->setText(zone);
-            tableWidget->item(editRow, 7)->setText(driver);
-            tableWidget->item(editRow, 8)->setText(phone);
+            tableWidget->item(editRow, 2)->setText(typeCam);
+            tableWidget->item(editRow, 3)->setText(cap);
+            tableWidget->item(editRow, 4)->setText(fill);
+            tableWidget->item(editRow, 6)->setText(typeDechet);
+            tableWidget->item(editRow, 7)->setText(zoneCombo->currentText());
+            tableWidget->item(editRow, 8)->setText(driver);
+            tableWidget->item(editRow, 9)->setText(phone);
+            tableWidget->item(editRow, 10)->setText(loc);
             QLabel *bl = new QLabel(state);
             bl->setAlignment(Qt::AlignCenter);
             bl->setStyleSheet(stateStyle(state));
-            tableWidget->setCellWidget(editRow, 4, bl);
+            tableWidget->setCellWidget(editRow, 5, bl);
             QMessageBox::information(this, "Succes", "Camion mis a jour !");
         } else {
             QMessageBox::critical(this, "Erreur", "Echec de la mise a jour.");
         }
     } else {
-        if (saveToDB(idCam, loc, cap, fill, state, type, zone, driver, phone)) {
+        if (saveToDB(idCam, typeCam, loc, cap, fill, state, typeDechet, idZone, driver, phone)) {
             loadDataFromDB();
             QMessageBox::information(this, "Succes", "Camion ajoute !");
         } else {
@@ -984,7 +1070,7 @@ void MainWindow::onSearchChanged(const QString &txt)
 {
     for (int r = 0; r < tableWidget->rowCount(); ++r) {
         bool found = false;
-        for (int c = 0; c < 10; ++c) {
+        for (int c = 0; c < 12; ++c) {
             auto *it = tableWidget->item(r, c);
             if (it && it->text().contains(txt, Qt::CaseInsensitive)) { found = true; break; }
         }
@@ -998,7 +1084,7 @@ void MainWindow::onStateFilterChanged(int index)
     if (index == 0) return;
     QString sel = stateFilter->currentText();
     for (int r = 0; r < tableWidget->rowCount(); ++r) {
-        QLabel *bl = qobject_cast<QLabel*>(tableWidget->cellWidget(r, 4));
+        QLabel *bl = qobject_cast<QLabel*>(tableWidget->cellWidget(r, 5));
         tableWidget->setRowHidden(r, !bl || bl->text() != sel);
     }
 }
@@ -1009,7 +1095,7 @@ void MainWindow::onTypeFilterChanged(int index)
     if (index == 0) return;
     QString sel = typeFilter->currentText();
     for (int r = 0; r < tableWidget->rowCount(); ++r) {
-        auto *it = tableWidget->item(r, 5);
+        auto *it = tableWidget->item(r, 6); // col 6 = Type Dechet
         tableWidget->setRowHidden(r, !it || it->text() != sel);
     }
 }

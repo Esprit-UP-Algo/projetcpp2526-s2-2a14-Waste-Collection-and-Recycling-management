@@ -1,81 +1,73 @@
 #include "utilisateur.h"
 
-Utilisateur::Utilisateur(int id, const QString& nom, const QString& prenom,
-                         const QString& email, const QString& telephone,
-                         const QString& motDePasse, const QString& role,
-                         const QString& ville, const QString& codePostal,
-                         const QString& sexe, const QString& photo)
-    : id(id), nom(nom), prenom(prenom), email(email), telephone(telephone),
-    motDePasse(motDePasse), role(role), ville(ville), codePostal(codePostal),
-    sexe(sexe), photo(photo)
-{}
+Utilisateur::Utilisateur(int id, QString nom, QString prenom,
+                         QString email, QString telephone,
+                         QString motDePasse, QString role,
+                         QString ville, QString codePostal,
+                         QString sexe, QString photo)
+{
+    this->id         = id;
+    this->nom        = nom;
+    this->prenom     = prenom;
+    this->email      = email;
+    this->telephone  = telephone;
+    this->motDePasse = motDePasse;
+    this->role       = role;
+    this->ville      = ville;
+    this->codePostal = codePostal;
+    this->sexe       = sexe;
+    this->photo      = photo;
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  ajouter() — INSERT INTO UTILISATEUR
 // ══════════════════════════════════════════════════════════════════════════════
 bool Utilisateur::ajouter()
 {
-    QSqlDatabase db = Database::getInstance().getDatabase();
+    QSqlQuery query;
 
-    // Générer un nouvel ID
-    QSqlQuery seqQuery(db);
-    seqQuery.exec("SELECT NVL(MAX(ID_UTILISATEUR), 0) + 1 FROM UTILISATEUR");
-    if (seqQuery.next())
-        id = seqQuery.value(0).toInt();
+    QString res = QString::number(id);
 
-    QSqlQuery query(db);
-    query.prepare(
-        "INSERT INTO UTILISATEUR "
-        "(ID_UTILISATEUR, NOM, PRENOM, EMAIL, NUM_TELEPHONE, MOT_DE_PASSE, ROLE, VILLE, CODE_POSTAL, SEXE, PHOTO) "
-        "VALUES (:id, :nom, :prenom, :email, :telephone, :motdepasse, :role, :ville, :codepostal, :sexe, :photo)"
-        );
+    // prepare() prend la requête en paramètre pour la préparer à l'exécution.
+    query.prepare("INSERT INTO UTILISATEUR "
+                  "(ID_UTILISATEUR, NOM, PRENOM, EMAIL, NUM_TELEPHONE, MOT_DE_PASSE, ROLE, VILLE, CODE_POSTAL, SEXE, PHOTO) "
+                  "VALUES (:id, :nom, :prenom, :email, :telephone, :motdepasse, :role, :ville, :codepostal, :sexe, :photo)");
 
-    query.bindValue(":id",          id);
-    query.bindValue(":nom",         nom);
-    query.bindValue(":prenom",      prenom);
-    query.bindValue(":email",       email);
-    query.bindValue(":telephone",   telephone);
-    query.bindValue(":motdepasse",  motDePasse);
-    query.bindValue(":role",        role);
-    query.bindValue(":ville",       ville);
-    query.bindValue(":codepostal",  codePostal);
-    query.bindValue(":sexe",        sexe);
-    query.bindValue(":photo",       photo);
+    // Création des variables liées
+    query.bindValue(":id",         res);
+    query.bindValue(":nom",        nom);
+    query.bindValue(":prenom",     prenom);
+    query.bindValue(":email",      email);
+    query.bindValue(":telephone",  telephone);
+    query.bindValue(":motdepasse", motDePasse);
+    query.bindValue(":role",       role);
+    query.bindValue(":ville",      ville);
+    query.bindValue(":codepostal", codePostal);
+    query.bindValue(":sexe",       sexe);
+    query.bindValue(":photo",      photo);
 
-    if (!query.exec()) {
-        qDebug() << "[Utilisateur] Erreur ajouter :" << query.lastError().text();
-        return false;
-    }
-    qDebug() << "[Utilisateur] Ajouté — ID :" << id;
-    return true;
+    return query.exec(); // exec() envoie la requête pour l'exécuter
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  afficher() — SELECT pour le QTableView (appelé après chaque opération CRUD)
+//  afficher() — SELECT pour le QTableView
 // ══════════════════════════════════════════════════════════════════════════════
 QSqlQueryModel* Utilisateur::afficher()
 {
-    QSqlDatabase db = Database::getInstance().getDatabase();
-
     QSqlQueryModel* model = new QSqlQueryModel();
-    model->setQuery(
-        "SELECT ID_UTILISATEUR, NOM, PRENOM, EMAIL, NUM_TELEPHONE, ROLE, VILLE, CODE_POSTAL, SEXE "
-        "FROM UTILISATEUR ORDER BY ID_UTILISATEUR",
-        db
-        );
 
-    model->setHeaderData(0, Qt::Horizontal, "ID");
-    model->setHeaderData(1, Qt::Horizontal, "Nom");
-    model->setHeaderData(2, Qt::Horizontal, "Prénom");
-    model->setHeaderData(3, Qt::Horizontal, "Email");
-    model->setHeaderData(4, Qt::Horizontal, "Téléphone");
-    model->setHeaderData(5, Qt::Horizontal, "Rôle");
-    model->setHeaderData(6, Qt::Horizontal, "Ville");
-    model->setHeaderData(7, Qt::Horizontal, "Code Postal");
-    model->setHeaderData(8, Qt::Horizontal, "Sexe");
+    model->setQuery("SELECT ID_UTILISATEUR, NOM, PRENOM, EMAIL, NUM_TELEPHONE, ROLE, VILLE, CODE_POSTAL, SEXE "
+                    "FROM UTILISATEUR ORDER BY ID_UTILISATEUR");
 
-    if (model->lastError().isValid())
-        qDebug() << "[Utilisateur] Erreur afficher :" << model->lastError().text();
+    model->setHeaderData(0, Qt::Horizontal, QObject::tr("ID"));
+    model->setHeaderData(1, Qt::Horizontal, QObject::tr("Nom"));
+    model->setHeaderData(2, Qt::Horizontal, QObject::tr("Prénom"));
+    model->setHeaderData(3, Qt::Horizontal, QObject::tr("Email"));
+    model->setHeaderData(4, Qt::Horizontal, QObject::tr("Téléphone"));
+    model->setHeaderData(5, Qt::Horizontal, QObject::tr("Rôle"));
+    model->setHeaderData(6, Qt::Horizontal, QObject::tr("Ville"));
+    model->setHeaderData(7, Qt::Horizontal, QObject::tr("Code Postal"));
+    model->setHeaderData(8, Qt::Horizontal, QObject::tr("Sexe"));
 
     return model;
 }
@@ -85,35 +77,31 @@ QSqlQueryModel* Utilisateur::afficher()
 // ══════════════════════════════════════════════════════════════════════════════
 bool Utilisateur::modifier()
 {
-    QSqlDatabase db = Database::getInstance().getDatabase();
+    QSqlQuery query;
 
-    QSqlQuery query(db);
-    query.prepare(
-        "UPDATE UTILISATEUR SET "
-        "NOM = :nom, PRENOM = :prenom, EMAIL = :email, NUM_TELEPHONE = :telephone, "
-        "MOT_DE_PASSE = :motdepasse, ROLE = :role, VILLE = :ville, "
-        "CODE_POSTAL = :codepostal, SEXE = :sexe, PHOTO = :photo "
-        "WHERE ID_UTILISATEUR = :id"
-        );
+    QString res = QString::number(id);
 
-    query.bindValue(":nom",         nom);
-    query.bindValue(":prenom",      prenom);
-    query.bindValue(":email",       email);
-    query.bindValue(":telephone",   telephone);
-    query.bindValue(":motdepasse",  motDePasse);
-    query.bindValue(":role",        role);
-    query.bindValue(":ville",       ville);
-    query.bindValue(":codepostal",  codePostal);
-    query.bindValue(":sexe",        sexe);
-    query.bindValue(":photo",       photo);
-    query.bindValue(":id",          id);
+    // prepare() prend la requête en paramètre pour la préparer à l'exécution.
+    query.prepare("UPDATE UTILISATEUR SET "
+                  "NOM = :nom, PRENOM = :prenom, EMAIL = :email, NUM_TELEPHONE = :telephone, "
+                  "MOT_DE_PASSE = :motdepasse, ROLE = :role, VILLE = :ville, "
+                  "CODE_POSTAL = :codepostal, SEXE = :sexe, PHOTO = :photo "
+                  "WHERE ID_UTILISATEUR = :id");
 
-    if (!query.exec()) {
-        qDebug() << "[Utilisateur] Erreur modifier :" << query.lastError().text();
-        return false;
-    }
-    qDebug() << "[Utilisateur] Modifié — ID :" << id;
-    return true;
+    // Création des variables liées
+    query.bindValue(":nom",        nom);
+    query.bindValue(":prenom",     prenom);
+    query.bindValue(":email",      email);
+    query.bindValue(":telephone",  telephone);
+    query.bindValue(":motdepasse", motDePasse);
+    query.bindValue(":role",       role);
+    query.bindValue(":ville",      ville);
+    query.bindValue(":codepostal", codePostal);
+    query.bindValue(":sexe",       sexe);
+    query.bindValue(":photo",      photo);
+    query.bindValue(":id",         res);
+
+    return query.exec(); // exec() envoie la requête pour l'exécuter
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -121,16 +109,13 @@ bool Utilisateur::modifier()
 // ══════════════════════════════════════════════════════════════════════════════
 bool Utilisateur::supprimer(int id)
 {
-    QSqlDatabase db = Database::getInstance().getDatabase();
+    QSqlQuery query;
 
-    QSqlQuery query(db);
+    QString res = QString::number(id);
+
     query.prepare("DELETE FROM UTILISATEUR WHERE ID_UTILISATEUR = :id");
-    query.bindValue(":id", id);
 
-    if (!query.exec()) {
-        qDebug() << "[Utilisateur] Erreur supprimer :" << query.lastError().text();
-        return false;
-    }
-    qDebug() << "[Utilisateur] Supprimé — ID :" << id;
-    return true;
+    query.bindValue(":id", res);
+
+    return query.exec(); // exec() envoie la requête pour l'exécuter
 }

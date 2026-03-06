@@ -1,4 +1,4 @@
-QT       += core gui printsupport sql
+QT       += core gui printsupport sql network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -7,13 +7,17 @@ CONFIG += c++17
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    database.cpp \
-    utilisateur.cpp
+    connection.cpp \
+    utilisateur.cpp \
+    chatbot.cpp \
+    otpmanager.cpp
 
 HEADERS += \
     mainwindow.h \
-    database.h \
-    utilisateur.h
+    connection.h \
+    utilisateur.h \
+    chatbot.h \
+    otpmanager.h
 
 FORMS += \
     mainwindow.ui

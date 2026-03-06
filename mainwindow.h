@@ -13,6 +13,8 @@
 #include <QLabel>
 #include <QRegularExpression>
 #include "utilisateur.h"
+#include "chatbot.h"
+#include "otpmanager.h"
 
 // ── Structure locale pour la table en mémoire (cache depuis BD) ──────────────
 struct UserRow {
@@ -37,11 +39,22 @@ public:
     explicit PasswordResetDialog(QWidget *parent = nullptr);
     QString getEmail() const { return emailEdit->text(); }
 
+protected:
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+
 private slots:
     void onResetClicked();
 
 private:
+    void showStatus(const QString &msg, bool success);
+
     QLineEdit *emailEdit;
+    QLabel    *statusLabel;
+
+    bool   m_dragging   = false;
+    QPoint m_dragOffset;
 };
 
 // ── Fenêtre principale ────────────────────────────────────────────────────────
@@ -52,6 +65,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void refreshTable();           // charge depuis BD et reaffiche
 
 private slots:
     void onLoginClicked();
@@ -68,7 +82,6 @@ private slots:
 private:
     void setupLoginScreen();
     void setupUserManagementScreen();
-    void refreshTable();           // charge depuis BD et reaffiche
     void updateUserTable();        // remplit le QTableWidget depuis filteredUsers
     void filterAndSortUsers();
     void clearForm();
@@ -106,6 +119,9 @@ private:
     // Champs login (pour validation)
     QLineEdit *loginEmailEdit;
     QLineEdit *loginPasswordEdit;
+
+    // ChatBot — bulle flottante
+    ChatBubbleButton *chatBubble = nullptr;
 };
 
 #endif // MAINWINDOW_H

@@ -1,4 +1,10 @@
 #include "mainwindow.h"
+#include <QApplication>
+#include <QMouseEvent>
+#include <QPropertyAnimation>
+#include <QGraphicsOpacityEffect>
+#include <QEasingCurve>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -18,6 +24,11 @@
 #include <QSplitter>
 #include <QSqlQuery>
 #include <QRegularExpression>
+#include <QValidator>
+#include <QDir>
+#include <QLinearGradient>
+#include <QPageLayout>
+#include <QPageSize>
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  Constructeur — charge les données depuis la BD dès l'ouverture
@@ -40,6 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Charger les données depuis la BD
     refreshTable();
+
 }
 
 MainWindow::~MainWindow() {}
@@ -52,7 +64,7 @@ void MainWindow::refreshTable()
 {
     users.clear();
 
-    QSqlDatabase db = Database::getInstance().getDatabase();
+    QSqlDatabase db = Connection::instance()->getDatabase();
     QSqlQuery query(db);
     query.exec(
         "SELECT ID_UTILISATEUR, NOM, PRENOM, EMAIL, NUM_TELEPHONE, ROLE, VILLE, CODE_POSTAL, SEXE, PHOTO, MOT_DE_PASSE "
@@ -106,11 +118,14 @@ void MainWindow::setupLoginScreen()
     QPixmap logo("magee.png");
     if (logo.isNull()) logo.load(":/magee.png");
     if (logo.isNull()) logo.load(QCoreApplication::applicationDirPath() + "/magee.png");
+    if (logo.isNull()) logo.load(QDir::currentPath() + "/magee.png");
+    if (logo.isNull()) logo.load("../magee.png");
+    if (logo.isNull()) logo.load("../../magee.png");
     if (!logo.isNull()) {
-        leftLogoLabel->setPixmap(logo.scaled(110, 110, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        leftLogoLabel->setPixmap(logo.scaled(160, 160, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         leftLogoLabel->setStyleSheet("background: transparent;");
     } else {
-        leftLogoLabel->setText("♻️");
+        leftLogoLabel->setText("🤖");
         leftLogoLabel->setStyleSheet("font-size: 80px; background: transparent;");
     }
     leftLogoLabel->setAlignment(Qt::AlignCenter);
@@ -308,11 +323,14 @@ QWidget* MainWindow::createSidebar()
     QPixmap logo("magee.png");
     if (logo.isNull()) { logo.load(":/magee.png"); }
     if (logo.isNull()) { logo.load(QCoreApplication::applicationDirPath() + "/magee.png"); }
+    if (logo.isNull()) { logo.load(QDir::currentPath() + "/magee.png"); }
+    if (logo.isNull()) { logo.load("../magee.png"); }
+    if (logo.isNull()) { logo.load("../../magee.png"); }
     if (!logo.isNull()) {
         logoLabel->setPixmap(logo.scaled(45, 45, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         logoLabel->setStyleSheet("background: transparent;");
     } else {
-        logoLabel->setText("🗑️");
+        logoLabel->setText("🤖");
         logoLabel->setStyleSheet("font-size: 35px; background: transparent;");
     }
     logoLayout->addWidget(logoLabel);
@@ -336,6 +354,7 @@ QWidget* MainWindow::createSidebar()
     sidebarLayout->addWidget([&]{ auto b = new QPushButton("♻️  Recyclage"); b->setStyleSheet(buttonStyle); return b; }());
     sidebarLayout->addWidget([&]{ auto b = new QPushButton("📋  Suivi collectes"); b->setStyleSheet(buttonStyle); return b; }());
     sidebarLayout->addWidget([&]{ auto b = new QPushButton("📊  Rapports"); b->setStyleSheet(buttonStyle); return b; }());
+
     sidebarLayout->addStretch();
     sidebarLayout->addWidget([&]{ auto b = new QPushButton("⚙️  Parametres"); b->setStyleSheet(buttonStyle); return b; }());
 
@@ -393,7 +412,11 @@ void MainWindow::setupUserManagementScreen()
     contentLayout->addWidget(topWidget);
 
     QLabel *pageTitle = new QLabel("Gestion des utilisateurs");
-    pageTitle->setStyleSheet("font-size: 28px; font-weight: bold; color: #000000; background: transparent;");
+    pageTitle->setStyleSheet(
+        "font-size: 28px; font-weight: bold; color: #FFFFFF; background-color: #6FA85E;"
+        " border-radius: 10px; padding: 12px 30px;"
+        );
+    pageTitle->setAlignment(Qt::AlignCenter);
     contentLayout->addWidget(pageTitle);
 
     // ── Splitter : formulaire gauche | tableau droite ─────────────────────────
@@ -402,17 +425,43 @@ void MainWindow::setupUserManagementScreen()
     splitter->setStyleSheet("QSplitter::handle { background-color: #DDDDDD; margin: 2px; }");
 
     // ── Formulaire ────────────────────────────────────────────────────────────
-    QGroupBox *formGroupBox = new QGroupBox("Formulaire Utilisateur");
+    QGroupBox *formGroupBox = new QGroupBox("");
     formGroupBox->setMinimumWidth(350);
     formGroupBox->setMaximumWidth(450);
     formGroupBox->setStyleSheet(
-        "QGroupBox { background-color: #FFFFFF; border: 2px solid #6FA85E; border-radius: 8px; margin-top: 10px; padding: 15px; font-size: 16px; font-weight: bold; color: #6FA85E; }"
-        "QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 5px 10px; background-color: #FFFFFF; }"
+        "QGroupBox { background-color: #FFFFFF; border: 2px solid #6FA85E; border-radius: 8px; margin-top: 30px; padding: 15px; }"
         );
 
     QVBoxLayout *formGroupLayout = new QVBoxLayout(formGroupBox);
     formGroupLayout->setSpacing(10);
     formGroupLayout->setContentsMargins(10, 10, 10, 10);
+
+    // ── Titre en haut du formulaire ───────────────────────────────────────────
+    QWidget *formTitleWidget = new QWidget();
+    formTitleWidget->setFixedHeight(46);
+    formTitleWidget->setStyleSheet(
+        "QWidget { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,"
+        "stop:0 #3B6B35, stop:0.5 #6FA85E, stop:1 #A3D977);"
+        " border-radius: 6px; }"
+        );
+    QHBoxLayout *formTitleLayout = new QHBoxLayout(formTitleWidget);
+    formTitleLayout->setContentsMargins(12, 0, 12, 0);
+    formTitleLayout->setSpacing(8);
+    QLabel *fTitleIcon = new QLabel("\U0001F464");
+    fTitleIcon->setStyleSheet("font-size: 18px; background: transparent;");
+    formTitleLayout->addWidget(fTitleIcon);
+    QLabel *fTitleText = new QLabel("Formulaire Utilisateur");
+    fTitleText->setStyleSheet(
+        "font-size: 14px; font-weight: bold; color: #FFFFFF; background: transparent;"
+        );
+    formTitleLayout->addWidget(fTitleText);
+    formTitleLayout->addStretch();
+    QLabel *fTitleBrand = new QLabel("TuniWaste");
+    fTitleBrand->setStyleSheet(
+        "font-size: 11px; color: rgba(255,255,255,0.80); background: transparent;"
+        );
+    formTitleLayout->addWidget(fTitleBrand);
+    formGroupLayout->addWidget(formTitleWidget);
 
     // Photo
     QHBoxLayout *photoTopLayout = new QHBoxLayout();
@@ -463,21 +512,25 @@ void MainWindow::setupUserManagementScreen()
     formFirstNameEdit = new QLineEdit();
     formFirstNameEdit->setPlaceholderText("Prénom *");
     formFirstNameEdit->setStyleSheet(lineEditStyle);
+    formFirstNameEdit->setFixedHeight(34);
     formFieldsLayout->addRow(makeLabel("Prénom:"), formFirstNameEdit);
 
     formLastNameEdit = new QLineEdit();
     formLastNameEdit->setPlaceholderText("Nom de famille *");
     formLastNameEdit->setStyleSheet(lineEditStyle);
+    formLastNameEdit->setFixedHeight(34);
     formFieldsLayout->addRow(makeLabel("Nom:"), formLastNameEdit);
 
     formEmailEdit = new QLineEdit();
     formEmailEdit->setPlaceholderText("nom@example.com *");
     formEmailEdit->setStyleSheet(lineEditStyle);
+    formEmailEdit->setFixedHeight(34);
     formFieldsLayout->addRow(makeLabel("Email:"), formEmailEdit);
 
     formPhoneEdit = new QLineEdit();
-    formPhoneEdit->setPlaceholderText("+216 XX XXX XXX *");
+    formPhoneEdit->setPlaceholderText("Ex: 22123456 *");
     formPhoneEdit->setStyleSheet(lineEditStyle);
+    formPhoneEdit->setFixedHeight(34);
     formFieldsLayout->addRow(makeLabel("Téléphone:"), formPhoneEdit);
 
     formGenderCombo = new QComboBox();
@@ -489,22 +542,28 @@ void MainWindow::setupUserManagementScreen()
     formCityEdit = new QLineEdit();
     formCityEdit->setPlaceholderText("Ville *");
     formCityEdit->setStyleSheet(lineEditStyle);
+    formCityEdit->setFixedHeight(34);
     formFieldsLayout->addRow(makeLabel("Ville:"), formCityEdit);
 
     formPostalCodeEdit = new QLineEdit();
     formPostalCodeEdit->setPlaceholderText("1000 *");
     formPostalCodeEdit->setStyleSheet(lineEditStyle);
+    formPostalCodeEdit->setFixedHeight(34);
     formFieldsLayout->addRow(makeLabel("Code Postal:"), formPostalCodeEdit);
 
     formPasswordEdit = new QLineEdit();
     formPasswordEdit->setPlaceholderText("min. 6 caractères *");
     formPasswordEdit->setEchoMode(QLineEdit::Password);
     formPasswordEdit->setStyleSheet(lineEditStyle);
+    formPasswordEdit->setFixedHeight(34);
     formFieldsLayout->addRow(makeLabel("Mot de passe:"), formPasswordEdit);
 
     formRoleCombo = new QComboBox();
     formRoleCombo->addItem("Administrateur");
-    formRoleCombo->addItem("Employe");
+    formRoleCombo->addItem("Chauffeur");
+    formRoleCombo->addItem("Responsable Camion");
+    formRoleCombo->addItem("Responsable Recyclage");
+    formRoleCombo->addItem("Responsable Zone");
     formRoleCombo->setStyleSheet(comboStyle);
     formFieldsLayout->addRow(makeLabel("Rôle:"), formRoleCombo);
 
@@ -535,12 +594,39 @@ void MainWindow::setupUserManagementScreen()
 
     formGroupLayout->addLayout(formButtonsLayout);
 
+    // (titre moved to top of form)
+
     // ── Tableau droite ────────────────────────────────────────────────────────
     QWidget *tableWidget = new QWidget();
     tableWidget->setStyleSheet("QWidget { background-color: transparent; }");
     QVBoxLayout *tableLayout = new QVBoxLayout(tableWidget);
     tableLayout->setContentsMargins(0, 0, 0, 0);
     tableLayout->setSpacing(15);
+
+    // ── Bouton chatbot en haut à droite du tableau ────────────────────────────
+    QWidget *tableHeaderWidget = new QWidget();
+    tableHeaderWidget->setStyleSheet("QWidget { background-color: transparent; }");
+    QHBoxLayout *tableHeaderLayout = new QHBoxLayout(tableHeaderWidget);
+    tableHeaderLayout->setContentsMargins(0, 0, 0, 0);
+    tableHeaderLayout->addStretch();
+
+    QPushButton *chatBotIconBtn = new QPushButton("🤖");
+    chatBotIconBtn->setFixedSize(52, 52);
+    chatBotIconBtn->setCursor(Qt::PointingHandCursor);
+    chatBotIconBtn->setToolTip("Assistant TuniWaste");
+    chatBotIconBtn->setStyleSheet(
+        "QPushButton {"
+        "  background-color: #3B6B35; color: white; font-size: 22px;"
+        "  border: none; border-radius: 26px; border: 3px solid #A3D977;"
+        "}"
+        "QPushButton:hover { background-color: #6FA85E; border: 3px solid #FFFFFF; }"
+        "QPushButton:pressed { background-color: #2A4F28; }"
+        );
+    connect(chatBotIconBtn, &QPushButton::clicked, [this]() {
+        if (chatBubble) chatBubble->triggerOpen();
+    });
+    tableHeaderLayout->addWidget(chatBotIconBtn);
+    tableLayout->addWidget(tableHeaderWidget);
 
     QWidget *searchFilterWidget = new QWidget();
     searchFilterWidget->setStyleSheet(
@@ -590,7 +676,10 @@ void MainWindow::setupUserManagementScreen()
     roleFilter = new QComboBox();
     roleFilter->addItem("Tous les rôles");
     roleFilter->addItem("Administrateur");
-    roleFilter->addItem("Employe");
+    roleFilter->addItem("Chauffeur");
+    roleFilter->addItem("Responsable Camion");
+    roleFilter->addItem("Responsable Recyclage");
+    roleFilter->addItem("Responsable Zone");
     roleFilter->setFixedWidth(180);
     roleFilter->setStyleSheet(
         "QComboBox { padding: 10px 15px; border: 1px solid #DDDDDD; border-radius: 4px; background-color: #FFFFFF; color: #000000; font-size: 14px; }"
@@ -611,6 +700,7 @@ void MainWindow::setupUserManagementScreen()
     exportPdfBtn->setCursor(Qt::PointingHandCursor);
     connect(exportPdfBtn, &QPushButton::clicked, this, &MainWindow::onExportPdfClicked);
     searchFilterLayout->addWidget(exportPdfBtn);
+
     tableLayout->addWidget(searchFilterWidget);
 
     // champ de recherche caché (pour le backend)
@@ -652,6 +742,7 @@ void MainWindow::setupUserManagementScreen()
         "QTableWidget { background-color: #FFFFFF; border: 1px solid #E0E0E0; gridline-color: #E5E5E5; color: #000000; font-size: 14px; }"
         "QTableWidget::item { padding: 10px 8px; border-bottom: 1px solid #E5E5E5; }"
         "QTableWidget::item:selected { background-color: #F0F7ED; color: #000000; }"
+        "QTableWidget::item:hover { background-color: transparent; }"
         "QHeaderView::section { background-color: #F8F8F8; color: #000000; padding: 12px 8px; border: none; border-bottom: 2px solid #E0E0E0; border-right: 1px solid #E5E5E5; font-weight: bold; font-size: 14px; }"
         "QTableWidget::item:alternate { background-color: #FAFAFA; }"
         );
@@ -664,6 +755,10 @@ void MainWindow::setupUserManagementScreen()
 
     contentLayout->addWidget(splitter);
     mainLayout->addWidget(contentArea);
+
+    // ── Bulle ChatBot — cachée (l'icône intégrée dans le tableau la déclenche) ─
+    chatBubble = new ChatBubbleButton(mainWidget);
+    chatBubble->hide();   // on masque la bulle flottante, on utilise le bouton tableau
 
     stackedWidget->addWidget(mainWidget);
 }
@@ -707,14 +802,18 @@ void MainWindow::updateUserTable()
         roleLayout->setAlignment(Qt::AlignCenter);
         QLabel *roleLabel = new QLabel(user.role);
         roleLabel->setAlignment(Qt::AlignCenter);
+        // Couleur selon le rôle — texte toujours centré
+        QString badgeBase = "color: #FFFFFF; padding: 6px 8px; border-radius: 4px; font-weight: bold; font-size: 10px; qproperty-alignment: AlignCenter;";
         if (user.role == "Administrateur") {
-            roleLabel->setStyleSheet(
-                "background-color: #FFA726; color: #FFFFFF; padding: 6px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; min-width: 140px; max-width: 140px;"
-                );
+            roleLabel->setStyleSheet("background-color: #FFA726; " + badgeBase);
+        } else if (user.role == "Chauffeur") {
+            roleLabel->setStyleSheet("background-color: #5DADE2; " + badgeBase);
+        } else if (user.role == "Responsable Camion") {
+            roleLabel->setStyleSheet("background-color: #8E44AD; " + badgeBase);
+        } else if (user.role == "Responsable Recyclage") {
+            roleLabel->setStyleSheet("background-color: #27AE60; " + badgeBase);
         } else {
-            roleLabel->setStyleSheet(
-                "background-color: #5DADE2; color: #FFFFFF; padding: 6px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; min-width: 90px; max-width: 90px;"
-                );
+            roleLabel->setStyleSheet("background-color: #E74C3C; " + badgeBase);
         }
         roleLayout->addWidget(roleLabel);
         QTableWidgetItem *roleSortItem = new QTableWidgetItem(user.role);
@@ -853,14 +952,13 @@ void MainWindow::filterAndSortUsers()
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  onLoginClicked() — VALIDATION email + mot de passe avant connexion
+//  onLoginClicked() — VALIDATION email + mot de passe (sans OTP)
 // ══════════════════════════════════════════════════════════════════════════════
 void MainWindow::onLoginClicked()
 {
     QString email    = loginEmailEdit->text().trimmed();
     QString password = loginPasswordEdit->text();
 
-    // ── Champs vides ──────────────────────────────────────────────────────────
     if (email.isEmpty()) {
         QMessageBox::warning(this, "Champ requis", "Veuillez entrer votre adresse email.");
         loginEmailEdit->setFocus();
@@ -872,7 +970,6 @@ void MainWindow::onLoginClicked()
         return;
     }
 
-    // ── Format email ──────────────────────────────────────────────────────────
     QRegularExpression emailRegex(R"(^[^@\s]+@[^@\s]+\.[^@\s]+$)");
     if (!emailRegex.match(email).hasMatch()) {
         QMessageBox::warning(this, "Email invalide",
@@ -881,8 +978,7 @@ void MainWindow::onLoginClicked()
         return;
     }
 
-    // ── Vérification dans la BD ───────────────────────────────────────────────
-    QSqlDatabase db = Database::getInstance().getDatabase();
+    QSqlDatabase db = Connection::instance()->getDatabase();
     QSqlQuery query(db);
     query.prepare("SELECT ID_UTILISATEUR FROM UTILISATEUR WHERE EMAIL = :email AND MOT_DE_PASSE = :password");
     query.bindValue(":email",    email);
@@ -892,11 +988,11 @@ void MainWindow::onLoginClicked()
         QMessageBox::warning(this, "Connexion refusée",
                              "Email ou mot de passe incorrect.\nVérifiez vos identifiants.");
         loginPasswordEdit->clear();
-        loginEmailEdit->setFocus();
+        loginPasswordEdit->setFocus();
         return;
     }
 
-    // ── Connexion réussie ─────────────────────────────────────────────────────
+    // Connexion directe sans OTP
     stackedWidget->setCurrentIndex(1);
 }
 
@@ -922,8 +1018,31 @@ void MainWindow::onSaveUserClicked()
         formFirstNameEdit->setFocus();
         return;
     }
+    QRegularExpression nomRegex(R"(^[A-Za-zÀ-ÿ\s]+$)");
+    if (!nomRegex.match(prenom).hasMatch()) {
+        QMessageBox::warning(this, "Prénom invalide",
+                             "Le prénom doit contenir uniquement des lettres.\n\n"
+                             "❌  Chiffres et symboles non autorisés.\n\n"
+                             "Exemples valides :\n"
+                             "  Mohamed\n"
+                             "  Ben Ali\n"
+                             "  Fatma");
+        formFirstNameEdit->setFocus();
+        return;
+    }
     if (nom.isEmpty()) {
         QMessageBox::warning(this, "Champ requis", "Le nom est obligatoire.");
+        formLastNameEdit->setFocus();
+        return;
+    }
+    if (!nomRegex.match(nom).hasMatch()) {
+        QMessageBox::warning(this, "Nom invalide",
+                             "Le nom doit contenir uniquement des lettres.\n\n"
+                             "❌  Chiffres et symboles non autorisés.\n\n"
+                             "Exemples valides :\n"
+                             "  Trabelsi\n"
+                             "  Ben Salah\n"
+                             "  Chaabane");
         formLastNameEdit->setFocus();
         return;
     }
@@ -948,10 +1067,16 @@ void MainWindow::onSaveUserClicked()
         formPhoneEdit->setFocus();
         return;
     }
-    QRegularExpression phoneRegex(R"(^\+?[\d\s\-]{7,20}$)");
+    QRegularExpression phoneRegex(R"(^[24579]\d{7}$)");
     if (!phoneRegex.match(telephone).hasMatch()) {
         QMessageBox::warning(this, "Téléphone invalide",
-                             "Le numéro de téléphone n'est pas valide.\nExemple : +216 22 123 456");
+                             "Le numéro doit contenir exactement 8 chiffres\n"
+                             "et commencer par l'un de ces chiffres :\n\n"
+                             "  2X XXX XXX  →  Ooredoo\n"
+                             "  4X XXX XXX  →  Lycamobile\n"
+                             "  5X XXX XXX  →  Orange\n"
+                             "  7X XXX XXX  →  Fixe\n"
+                             "  9X XXX XXX  →  Tunisie Telecom");
         formPhoneEdit->setFocus();
         return;
     }
@@ -992,8 +1117,12 @@ void MainWindow::onSaveUserClicked()
 
     // ── Appel Modèle — pas de SQL dans ce slot ────────────────────────────────
     if (editingUserId == -1) {
-        // AJOUTER
-        Utmp = Utilisateur(0, nom, prenom, email, telephone, password, role, ville, codePostal, sexe, formPhotoPath);
+        // AJOUTER — récupérer le prochain ID disponible
+        int nextId = 1;
+        QSqlQuery idQuery;
+        if (idQuery.exec("SELECT MAX(ID_UTILISATEUR) FROM UTILISATEUR") && idQuery.next())
+            nextId = idQuery.value(0).toInt() + 1;
+        Utmp = Utilisateur(nextId, nom, prenom, email, telephone, password, role, ville, codePostal, sexe, formPhotoPath);
         if (Utmp.ajouter()) {
             QMessageBox::information(this, "Succès", "Utilisateur ajouté avec succès !");
             clearForm();
@@ -1083,207 +1212,469 @@ void MainWindow::onForgotPasswordClicked()
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  Export PDF
+//  Export PDF  — professional table layout, DPI-aware, paginated
 // ══════════════════════════════════════════════════════════════════════════════
 void MainWindow::onExportPdfClicked()
 {
+    // ── File save dialog ──────────────────────────────────────────────────────
     QString defaultFileName = "Liste_Utilisateurs_" +
                               QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss") + ".pdf";
-
     QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     QString fileName = QFileDialog::getSaveFileName(this, "Exporter en PDF",
                                                     documentsPath + "/" + defaultFileName,
                                                     "Fichiers PDF (*.pdf)");
     if (fileName.isEmpty()) return;
 
-    QPrinter printer(QPrinter::HighResolution);
+    // ─────────────────────────────────────────────────────────────────────────
+    //  KEY FIX: QPrinter::ScreenResolution (96 dpi) keeps font metrics in sync
+    //  with layout metrics.  HighResolution (1200 dpi) causes the infamous
+    //  character-stacking / text-overflow bug on Windows.
+    // ─────────────────────────────────────────────────────────────────────────
+    QPrinter printer(QPrinter::ScreenResolution);
     printer.setOutputFormat(QPrinter::PdfFormat);
     printer.setOutputFileName(fileName);
     printer.setPageSize(QPageSize::A4);
-    printer.setPageOrientation(QPageLayout::Portrait);
-    printer.setPageMargins(QMarginsF(15, 15, 15, 15), QPageLayout::Millimeter);
+    printer.setPageOrientation(QPageLayout::Landscape);
+    printer.setPageMargins(QMarginsF(10, 10, 10, 10), QPageLayout::Millimeter);
 
-    QPainter painter;
-    if (!painter.begin(&printer)) {
-        QMessageBox::critical(this, "Erreur", "Impossible de créer le fichier PDF.");
+    QPainter p;
+    if (!p.begin(&printer)) {
+        QMessageBox::critical(this, "Erreur", "Impossible de creer le fichier PDF.");
         return;
     }
 
-    QFont titleFont("Arial", 20, QFont::Bold);
-    QFont headerFont("Arial", 12, QFont::Bold);
-    QFont normalFont("Arial", 10);
-    QFont smallFont("Arial", 8);
+    // ── Page geometry (device pixels at 96 dpi) ───────────────────────────────
+    const QRectF pr  = printer.pageRect(QPrinter::DevicePixel);
+    const qreal  W   = pr.width();
+    const qreal  H   = pr.height();
+    const qreal  mL  = 28, mR = 28, mT = 28, mB = 32;
+    const qreal  CW  = W - mL - mR;   // usable content width
 
-    int pageWidth  = printer.pageRect(QPrinter::DevicePixel).width();
-    int pageHeight = printer.pageRect(QPrinter::DevicePixel).height();
-    int margin = 50;
-    int yPos   = margin;
+    // ── Colours ───────────────────────────────────────────────────────────────
+    const QColor cGreenDark ("#2E5D28");
+    const QColor cGreenMid  ("#3B6B35");
+    const QColor cGreenLight("#6FA85E");
+    const QColor cGreenXL   ("#A3D977");
+    const QColor cBorder    ("#C5DCB8");
+    const QColor cAlt       ("#F2F9EE");
+    const QColor cWhite     (Qt::white);
+    const QColor cText      ("#1A2E17");
+    const QColor cGray      ("#888888");
 
-    painter.setPen(QColor(111, 168, 94));
-    painter.setFont(titleFont);
-    painter.drawText(margin, yPos, "TuniWaste - Liste des Utilisateurs");
-    yPos += 60;
+    // ── Fonts — use point sizes (device-independent) ──────────────────────────
+    QFont fTitle("Arial", 13, QFont::Bold);
+    QFont fDate ("Arial",  7);
+    QFont fStat ("Arial",  7, QFont::Bold);
+    QFont fHdr  ("Arial",  8, QFont::Bold);
+    QFont fCell ("Arial",  8);
+    QFont fFoot ("Arial",  7);
 
-    painter.setFont(smallFont);
-    painter.setPen(Qt::black);
-    painter.drawText(margin, yPos,
-                     "Généré le : " + QDateTime::currentDateTime().toString("dd/MM/yyyy à hh:mm:ss"));
-    yPos += 40;
+    // ── Column layout ─────────────────────────────────────────────────────────
+    //   ID | Nom Complet | Telephone | Email | Sexe | Role | Ville
+    struct Col { QString label; qreal w; };
+    QVector<Col> cols = {
+        {"ID",           0.055 * CW},
+        {"Nom Complet",  0.160 * CW},
+        {"Telephone",    0.120 * CW},
+        {"Email",        0.235 * CW},
+        {"Sexe",         0.060 * CW},
+        {"Role",         0.185 * CW},
+        {"Ville",        0.185 * CW}
+    };
+    // snap last column so total == CW exactly
+    {
+        qreal used = 0;
+        for (int i = 0; i < cols.size()-1; i++) used += cols[i].w;
+        cols.last().w = CW - used;
+    }
 
-    painter.setPen(QPen(QColor(224, 224, 224), 2));
-    painter.drawLine(margin, yPos, pageWidth - margin, yPos);
-    yPos += 30;
+    const qreal rowH  = 20;   // data row height (pt/px at 96 dpi)
+    const qreal hdrH  = 22;   // column header height
+    const qreal padX  =  5;   // horizontal text padding
 
-    painter.setFont(normalFont);
-    painter.setPen(Qt::black);
-    int nbAdmin = 0, nbEmp = 0;
+    // ── helpers ───────────────────────────────────────────────────────────────
+    // Draw a filled rectangle with bottom+right border line, then draw text
+    auto drawCell = [&](qreal x, qreal y, qreal w, qreal h,
+                        const QString &txt, const QFont &f,
+                        Qt::Alignment align, QColor bg, QColor fg)
+    {
+        p.setPen(Qt::NoPen);
+        p.setBrush(bg);
+        p.drawRect(QRectF(x, y, w, h));
+
+        p.setPen(QPen(cBorder, 0.5));
+        p.setBrush(Qt::NoBrush);
+        p.drawLine(QPointF(x+w, y), QPointF(x+w, y+h));
+        p.drawLine(QPointF(x,   y+h), QPointF(x+w, y+h));
+
+        p.setFont(f);
+        p.setPen(fg);
+        QFontMetrics fm(f);
+        QString elided = fm.elidedText(txt, Qt::ElideRight, int(w - 2*padX));
+        p.drawText(QRectF(x+padX, y, w-2*padX, h), align | Qt::AlignVCenter, elided);
+    };
+
+    // Draw full column-header row
+    auto drawColHeaders = [&](qreal y) {
+        qreal x = mL;
+        // top border of header strip
+        p.setPen(QPen(cBorder, 0.5));
+        p.drawLine(QPointF(mL, y), QPointF(mL+CW, y));
+        // left border
+        p.drawLine(QPointF(mL, y), QPointF(mL, y+hdrH));
+        for (const Col &c : cols) {
+            drawCell(x, y, c.w, hdrH, c.label, fHdr, Qt::AlignCenter, cGreenMid, cWhite);
+            x += c.w;
+        }
+    };
+
+    // ── Statistics ────────────────────────────────────────────────────────────
+    int nbAdmin=0, nbChauf=0, nbCamion=0, nbRecyc=0, nbZone=0;
     for (const UserRow &u : std::as_const(filteredUsers)) {
-        if (u.role == "Administrateur") nbAdmin++;
-        else nbEmp++;
+        if      (u.role == "Administrateur")        nbAdmin++;
+        else if (u.role == "Chauffeur")             nbChauf++;
+        else if (u.role == "Responsable Camion")    nbCamion++;
+        else if (u.role == "Responsable Recyclage") nbRecyc++;
+        else                                         nbZone++;
     }
-    painter.drawText(margin, yPos,
-                     QString("Nombre total : %1  |  Administrateurs : %2  |  Employés : %3")
-                         .arg(filteredUsers.size()).arg(nbAdmin).arg(nbEmp));
-    yPos += 50;
 
-    int colWidths[] = {50, 130, 130, 210, 80, 110, 100};
-    int totalWidth  = 0;
-    for (int w : colWidths) totalWidth += w;
-    double scaleFactor = (double)(pageWidth - 2 * margin) / totalWidth;
-    for (int i = 0; i < 7; i++) colWidths[i] = (int)(colWidths[i] * scaleFactor);
+    // ── Draw page header (banner + optional stats bar + col headers) ──────────
+    int pageNum = 1;
+    auto drawPageHeader = [&](bool firstPage) -> qreal
+    {
+        qreal y = mT;
 
-    painter.setFont(headerFont);
-    painter.setPen(Qt::white);
-    painter.setBrush(QColor(111, 168, 94));
-    int headerHeight = 40;
-    painter.drawRect(margin, yPos, pageWidth - 2 * margin, headerHeight);
+        // — Green gradient banner —
+        const qreal bannerH = 36;
+        QLinearGradient grad(mL, y, mL+CW, y);
+        grad.setColorAt(0.0,  cGreenDark);
+        grad.setColorAt(0.5,  cGreenMid);
+        grad.setColorAt(1.0,  cGreenLight);
+        p.setPen(Qt::NoPen);
+        p.setBrush(grad);
+        p.drawRoundedRect(QRectF(mL, y, CW, bannerH), 4, 4);
 
-    int xPos = margin;
-    QStringList headers = {"ID", "Prénom", "Nom", "Email", "Sexe", "Ville", "Rôle"};
-    for (int i = 0; i < headers.size(); i++) {
-        painter.drawText(QRect(xPos + 10, yPos, colWidths[i] - 10, headerHeight),
-                         Qt::AlignVCenter | Qt::AlignLeft, headers[i]);
-        xPos += colWidths[i];
-    }
-    yPos += headerHeight;
+        // title (left)
+        p.setFont(fTitle);
+        p.setPen(cWhite);
+        p.drawText(QRectF(mL+10, y, CW*0.6, bannerH),
+                   Qt::AlignVCenter | Qt::AlignLeft,
+                   "TuniWaste  —  Liste des Utilisateurs");
 
-    painter.setFont(normalFont);
-    int rowHeight = 35;
-    bool alternate = false;
+        // date (right)
+        p.setFont(fDate);
+        p.setPen(QColor(210, 240, 200));
+        p.drawText(QRectF(mL, y, CW-10, bannerH),
+                   Qt::AlignVCenter | Qt::AlignRight,
+                   "Genere le : " + QDateTime::currentDateTime().toString("dd/MM/yyyy  hh:mm"));
+        y += bannerH + 4;
 
-    for (const UserRow &user : std::as_const(filteredUsers)) {
-        if (yPos + rowHeight > pageHeight - margin) {
-            printer.newPage();
-            yPos = margin;
-            painter.setPen(Qt::white);
-            painter.setBrush(QColor(111, 168, 94));
-            painter.setFont(headerFont);
-            painter.drawRect(margin, yPos, pageWidth - 2 * margin, headerHeight);
-            xPos = margin;
-            for (int i = 0; i < headers.size(); i++) {
-                painter.drawText(QRect(xPos + 10, yPos, colWidths[i] - 10, headerHeight),
-                                 Qt::AlignVCenter | Qt::AlignLeft, headers[i]);
-                xPos += colWidths[i];
+        // — Stats bar (first page only) —
+        if (firstPage) {
+            const qreal sH = 18;
+            p.setPen(Qt::NoPen);
+            p.setBrush(QColor(242, 249, 238));
+            p.drawRoundedRect(QRectF(mL, y, CW, sH), 3, 3);
+            p.setPen(QPen(cBorder, 0.5));
+            p.setBrush(Qt::NoBrush);
+            p.drawRoundedRect(QRectF(mL, y, CW, sH), 3, 3);
+
+            QStringList items = {
+                QString("Total : %1").arg(filteredUsers.size()),
+                QString("Admins : %1").arg(nbAdmin),
+                QString("Chauffeurs : %1").arg(nbChauf),
+                QString("Camion : %1").arg(nbCamion),
+                QString("Recyclage : %1").arg(nbRecyc),
+                QString("Zone : %1").arg(nbZone)
+            };
+            qreal sw = CW / items.size();
+            for (int i = 0; i < items.size(); i++) {
+                p.setFont(fStat);
+                p.setPen(i == 0 ? cGreenLight : cGreenMid);
+                p.drawText(QRectF(mL + i*sw, y, sw, sH), Qt::AlignCenter, items[i]);
             }
-            yPos += headerHeight;
-            painter.setFont(normalFont);
-            alternate = false;
+            y += sH + 4;
         }
 
-        painter.setBrush(alternate ? QColor(249, 249, 249) : Qt::white);
-        painter.setPen(QColor(224, 224, 224));
-        painter.drawRect(margin, yPos, pageWidth - 2 * margin, rowHeight);
-        painter.setPen(Qt::black);
-        xPos = margin;
+        drawColHeaders(y);
+        return y + hdrH;
+    };
 
-        QStringList rowData = {
-            QString::number(user.id), user.prenom, user.nom,
-            user.email, user.sexe, user.ville, user.role
+    qreal yPos  = drawPageHeader(true);
+    bool  altRow = false;
+
+    // ── Data rows ─────────────────────────────────────────────────────────────
+    for (const UserRow &user : std::as_const(filteredUsers)) {
+
+        // New page if needed
+        if (yPos + rowH > H - mB) {
+            // footer
+            p.setFont(fFoot);
+            p.setPen(cGray);
+            p.drawText(QRectF(mL, H-mB, CW, mB), Qt::AlignBottom | Qt::AlignCenter,
+                       QString("TuniWaste (c) %1  -  Systeme de Gestion des Dechets   |   Page %2")
+                           .arg(QDate::currentDate().year()).arg(pageNum));
+            printer.newPage();
+            pageNum++;
+            altRow = false;
+            yPos   = drawPageHeader(false);
+        }
+
+        // left border of row
+        p.setPen(QPen(cBorder, 0.5));
+        p.drawLine(QPointF(mL, yPos), QPointF(mL, yPos+rowH));
+
+        QColor rowBg = altRow ? cAlt : cWhite;
+        qreal x = mL;
+
+        QStringList vals = {
+            QString::number(user.id),
+            (user.prenom + " " + user.nom).trimmed(),
+            user.telephone,
+            user.email,
+            user.sexe,
+            user.role,
+            user.ville
         };
-        for (int i = 0; i < rowData.size(); i++) {
-            QString text = painter.fontMetrics().elidedText(rowData[i], Qt::ElideRight, colWidths[i] - 20);
-            painter.drawText(QRect(xPos + 10, yPos, colWidths[i] - 15, rowHeight),
-                             Qt::AlignVCenter | Qt::AlignLeft, text);
-            xPos += colWidths[i];
+
+        for (int i = 0; i < vals.size(); i++) {
+            QColor bg = rowBg, fg = cText;
+            if (i == 5) {  // Role column — colour coded
+                if      (user.role == "Administrateur")        { bg = QColor(255,243,224); fg = QColor(160,80,0);   }
+                else if (user.role == "Chauffeur")             { bg = QColor(224,240,255); fg = QColor(0,80,160);   }
+                else if (user.role == "Responsable Camion")    { bg = QColor(240,224,255); fg = QColor(90,0,150);   }
+                else if (user.role == "Responsable Recyclage") { bg = QColor(224,245,230); fg = QColor(20,110,50);  }
+                else                                            { bg = QColor(255,228,228); fg = QColor(160,20,20); }
+            }
+            drawCell(x, yPos, cols[i].w, rowH, vals[i], fCell,
+                     i == 0 ? Qt::AlignCenter : Qt::AlignLeft, bg, fg);
+            x += cols[i].w;
         }
-        yPos += rowHeight;
-        alternate = !alternate;
+
+        yPos  += rowH;
+        altRow = !altRow;
     }
 
-    yPos = pageHeight - margin + 20;
-    painter.setFont(smallFont);
-    painter.setPen(QColor(153, 153, 153));
-    painter.drawText(margin, yPos, pageWidth - 2 * margin, 20, Qt::AlignCenter,
-                     "TuniWaste © " + QString::number(QDateTime::currentDateTime().date().year()) +
-                         " - Système de Gestion des Déchets");
-    painter.end();
+    // ── Footer last page ──────────────────────────────────────────────────────
+    p.setFont(fFoot);
+    p.setPen(cGray);
+    p.drawText(QRectF(mL, H-mB, CW, mB), Qt::AlignBottom | Qt::AlignCenter,
+               QString("TuniWaste (c) %1  -  Systeme de Gestion des Dechets   |   Page %2")
+                   .arg(QDate::currentDate().year()).arg(pageNum));
 
-    QMessageBox::information(this, "Succès",
-                             "PDF exporté avec succès !\n\nEmplacement : " + fileName);
+    p.end();
+
+    QMessageBox::information(this, "Succes",
+                             "PDF exporte avec succes !\n\nEmplacement : " + fileName);
 }
+
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  PasswordResetDialog
 // ══════════════════════════════════════════════════════════════════════════════
 PasswordResetDialog::PasswordResetDialog(QWidget *parent) : QDialog(parent)
 {
-    setWindowTitle("Réinitialisation du mot de passe");
     setModal(true);
-    setFixedSize(500, 280);
-    setStyleSheet("QDialog { background-color: #FFFFFF; } QLabel { color: #000000; background: transparent; }");
+    setFixedSize(480, 400);
+    setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
+    setAttribute(Qt::WA_TranslucentBackground);
 
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(20);
-    mainLayout->setContentsMargins(30, 30, 30, 30);
+    QVBoxLayout *outerLayout = new QVBoxLayout(this);
+    outerLayout->setContentsMargins(0, 0, 0, 0);
 
-    QLabel *titleLabel = new QLabel("Réinitialiser le mot de passe");
-    titleLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #000000; background: transparent;");
-    titleLabel->setAlignment(Qt::AlignCenter);
-    mainLayout->addWidget(titleLabel);
-
-    QLabel *instructionLabel = new QLabel(
-        "Entrez votre adresse email et nous vous enverrons un lien\npour réinitialiser votre mot de passe."
+    // ── Card ─────────────────────────────────────────────────────────────────
+    QWidget *card = new QWidget();
+    card->setObjectName("pwdCard");
+    card->setStyleSheet(
+        "QWidget#pwdCard {"
+        "  background-color: #FFFFFF;"
+        "  border-radius: 20px;"
+        "  border: 1.5px solid #C8E6C0;"
+        "}"
         );
-    instructionLabel->setStyleSheet("font-size: 14px; color: #666666; background: transparent;");
-    instructionLabel->setAlignment(Qt::AlignCenter);
-    instructionLabel->setWordWrap(true);
-    mainLayout->addWidget(instructionLabel);
-    mainLayout->addSpacing(10);
+    outerLayout->addWidget(card);
 
-    QLabel *emailLabel = new QLabel("Adresse email :");
-    emailLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #000000; background: transparent;");
-    mainLayout->addWidget(emailLabel);
+    QVBoxLayout *cardLayout = new QVBoxLayout(card);
+    cardLayout->setContentsMargins(0, 0, 0, 0);
+    cardLayout->setSpacing(0);
+
+    // ── Drag handle / title bar ───────────────────────────────────────────────
+    QWidget *topBar = new QWidget();
+    topBar->setFixedHeight(58);
+    topBar->setCursor(Qt::OpenHandCursor);
+    topBar->setStyleSheet(
+        "QWidget {"
+        "  background: qlineargradient(x1:0,y1:0,x2:1,y2:0,"
+        "    stop:0 #1B4D18, stop:0.4 #2E5D28, stop:0.7 #3B6B35, stop:1 #5C9A4E);"
+        "  border-top-left-radius: 20px; border-top-right-radius: 20px;"
+        "}"
+        );
+    QHBoxLayout *topL = new QHBoxLayout(topBar);
+    topL->setContentsMargins(18, 0, 14, 0);
+
+    QLabel *lockIcon = new QLabel("🔑");
+    lockIcon->setStyleSheet("font-size: 20px; background: transparent;");
+    topL->addWidget(lockIcon);
+
+    QWidget *topInfo = new QWidget();
+    topInfo->setStyleSheet("background: transparent;");
+    QVBoxLayout *tiL = new QVBoxLayout(topInfo);
+    tiL->setSpacing(1); tiL->setContentsMargins(0,0,0,0);
+    QLabel *tiTitle = new QLabel("Mot de passe oublie ?");
+    tiTitle->setStyleSheet("font-size: 14px; font-weight: bold; color: #FFFFFF; background: transparent;");
+    QLabel *tiSub   = new QLabel("TuniWaste — Recuperation de compte");
+    tiSub->setStyleSheet("font-size: 10px; color: #A3D977; background: transparent;");
+    tiL->addWidget(tiTitle); tiL->addWidget(tiSub);
+    topL->addWidget(topInfo);
+    topL->addStretch();
+
+    QPushButton *closeBtn = new QPushButton("x");
+    closeBtn->setFixedSize(28, 28);
+    closeBtn->setCursor(Qt::PointingHandCursor);
+    closeBtn->setStyleSheet(
+        "QPushButton { background-color: rgba(255,255,255,0.18); color: white;"
+        "  font-size: 13px; font-weight: bold; border: none; border-radius: 14px; }"
+        "QPushButton:hover { background-color: rgba(255,80,80,0.85); }"
+        );
+    connect(closeBtn, &QPushButton::clicked, this, &QDialog::reject);
+    topL->addWidget(closeBtn);
+    cardLayout->addWidget(topBar);
+
+    // ── Inner content ─────────────────────────────────────────────────────────
+    QWidget *inner = new QWidget();
+    inner->setStyleSheet("background: transparent;");
+    QVBoxLayout *innerL = new QVBoxLayout(inner);
+    innerL->setContentsMargins(40, 24, 40, 28);
+    innerL->setSpacing(14);
+
+    QLabel *instrLabel = new QLabel(
+        "Entrez votre adresse email.\nVotre mot de passe vous sera envoye immediatement."
+        );
+    instrLabel->setStyleSheet("font-size: 13px; color: #5A7A55; background: transparent;");
+    instrLabel->setAlignment(Qt::AlignCenter);
+    instrLabel->setWordWrap(true);
+    innerL->addWidget(instrLabel);
+
+    QLabel *emailLabel = new QLabel("Adresse email");
+    emailLabel->setStyleSheet("font-size: 12px; font-weight: bold; color: #3B6B35; background: transparent;");
+    innerL->addWidget(emailLabel);
 
     emailEdit = new QLineEdit();
     emailEdit->setPlaceholderText("nom@example.com");
+    emailEdit->setFixedHeight(48);
     emailEdit->setStyleSheet(
-        "QLineEdit { padding: 12px; border: 2px solid #CCCCCC; border-radius: 6px; background-color: #FFFFFF; color: #000000; font-size: 14px; }"
-        "QLineEdit:focus { border: 2px solid #A3C651; }"
+        "QLineEdit { padding: 12px 16px; border: 2px solid #D4EDDA; border-radius: 10px;"
+        " background-color: #F8FCF6; color: #2C3E25; font-size: 14px; }"
+        "QLineEdit:focus { border: 2px solid #6FA85E; background-color: #FFFFFF; }"
         );
-    mainLayout->addWidget(emailEdit);
-    mainLayout->addSpacing(10);
+    connect(emailEdit, &QLineEdit::returnPressed, this, &PasswordResetDialog::onResetClicked);
+    innerL->addWidget(emailEdit);
 
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->setSpacing(15);
+    // Inline status label (hidden initially)
+    statusLabel = new QLabel();
+    statusLabel->setWordWrap(true);
+    statusLabel->setFixedHeight(32);
+    statusLabel->setAlignment(Qt::AlignCenter);
+    statusLabel->setStyleSheet("background: transparent; font-size: 12px;");
+    statusLabel->setVisible(false);
+    innerL->addWidget(statusLabel);
+
+    // Buttons row
+    QHBoxLayout *btnRow = new QHBoxLayout();
+    btnRow->setSpacing(10);
 
     QPushButton *cancelBtn = new QPushButton("Annuler");
+    cancelBtn->setFixedHeight(44);
+    cancelBtn->setCursor(Qt::PointingHandCursor);
     cancelBtn->setStyleSheet(
-        "QPushButton { background-color: #F5F5F5; color: #000000; padding: 12px 24px; border: 2px solid #CCCCCC; border-radius: 6px; font-weight: bold; font-size: 14px; }"
-        "QPushButton:hover { background-color: #F5F5F5; border: 2px solid #999999; }"
+        "QPushButton { background-color: #F2F2F2; color: #555; padding: 10px 20px;"
+        " border: 2px solid #DDD; border-radius: 10px; font-weight: bold; font-size: 13px; }"
+        "QPushButton:hover { background-color: #E8E8E8; }"
         );
     connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
 
-    QPushButton *resetBtn = new QPushButton("Envoyer");
+    QPushButton *resetBtn = new QPushButton("Envoyer le mot de passe");
+    resetBtn->setFixedHeight(44);
+    resetBtn->setCursor(Qt::PointingHandCursor);
     resetBtn->setStyleSheet(
-        "QPushButton { background-color: #A3C651; color: #FFFFFF; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; }"
-        "QPushButton:hover { background-color: #8FB544; }"
+        "QPushButton {"
+        "  background: qlineargradient(x1:0,y1:0,x2:1,y2:1,"
+        "    stop:0 #6FA85E, stop:1 #4A8F42);"
+        "  color: #FFFFFF; padding: 10px 20px; border: none;"
+        "  border-radius: 10px; font-weight: bold; font-size: 13px;"
+        "}"
+        "QPushButton:hover { background-color: #5A9048; }"
+        "QPushButton:pressed { background-color: #3B6B35; }"
         );
     connect(resetBtn, &QPushButton::clicked, this, &PasswordResetDialog::onResetClicked);
 
-    buttonLayout->addStretch();
-    buttonLayout->addWidget(cancelBtn);
-    buttonLayout->addWidget(resetBtn);
-    mainLayout->addLayout(buttonLayout);
+    btnRow->addWidget(cancelBtn, 1);
+    btnRow->addWidget(resetBtn, 2);
+    innerL->addLayout(btnRow);
+    cardLayout->addWidget(inner);
+
+    // Fade-in animation
+    QGraphicsOpacityEffect *fx = new QGraphicsOpacityEffect(this);
+    this->setGraphicsEffect(fx);
+    QPropertyAnimation *anim = new QPropertyAnimation(fx, "opacity", this);
+    anim->setDuration(200);
+    anim->setStartValue(0.0);
+    anim->setEndValue(1.0);
+    anim->setEasingCurve(QEasingCurve::OutCubic);
+    anim->start(QAbstractAnimation::DeleteWhenStopped);
+
+    emailEdit->setFocus();
+}
+
+// ── PasswordResetDialog — drag support ───────────────────────────────────────
+void PasswordResetDialog::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton && event->pos().y() <= 58) {
+        m_dragging   = true;
+        m_dragOffset = event->globalPosition().toPoint() - frameGeometry().topLeft();
+        setCursor(Qt::ClosedHandCursor);
+        event->accept();
+        return;
+    }
+    QDialog::mousePressEvent(event);
+}
+
+void PasswordResetDialog::mouseMoveEvent(QMouseEvent *event)
+{
+    if (m_dragging && (event->buttons() & Qt::LeftButton)) {
+        move(event->globalPosition().toPoint() - m_dragOffset);
+        event->accept();
+        return;
+    }
+    QDialog::mouseMoveEvent(event);
+}
+
+void PasswordResetDialog::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (m_dragging) {
+        m_dragging = false;
+        setCursor(Qt::ArrowCursor);
+        event->accept();
+        return;
+    }
+    QDialog::mouseReleaseEvent(event);
+}
+
+// ── showStatus() — inline feedback instead of QMessageBox ────────────────────
+void PasswordResetDialog::showStatus(const QString &msg, bool success)
+{
+    statusLabel->setText(msg);
+    if (success)
+        statusLabel->setStyleSheet(
+            "font-size: 12px; border-radius: 6px; padding: 4px 8px;"
+            " background-color: #E8F5E3; color: #2E7D32; border: 1px solid #A5D6A7;"
+            );
+    else
+        statusLabel->setStyleSheet(
+            "font-size: 12px; border-radius: 6px; padding: 4px 8px;"
+            " background-color: #FFEBEE; color: #C62828; border: 1px solid #EF9A9A;"
+            );
+    statusLabel->setVisible(true);
 }
 
 void PasswordResetDialog::onResetClicked()
@@ -1291,21 +1682,39 @@ void PasswordResetDialog::onResetClicked()
     QString email = emailEdit->text().trimmed();
 
     if (email.isEmpty()) {
-        QMessageBox::warning(this, "Champ requis", "Veuillez entrer votre adresse email.");
+        showStatus("Veuillez entrer votre adresse email.", false);
         emailEdit->setFocus();
         return;
     }
 
     QRegularExpression emailRegex(R"(^[^@\s]+@[^@\s]+\.[^@\s]+$)");
     if (!emailRegex.match(email).hasMatch()) {
-        QMessageBox::warning(this, "Email invalide",
-                             "L'adresse email n'est pas valide.\nExemple : nom@example.com");
+        showStatus("Email invalide. Exemple : nom@example.com", false);
         emailEdit->setFocus();
         return;
     }
 
-    QMessageBox::information(this, "Succès",
-                             "Un email de réinitialisation a été envoyé à " + email +
-                                 "\n\nVeuillez vérifier votre boîte de réception.");
-    accept();
+    QSqlDatabase db = Connection::instance()->getDatabase();
+    QSqlQuery query(db);
+    query.prepare("SELECT MOT_DE_PASSE FROM UTILISATEUR WHERE EMAIL = :email");
+    query.bindValue(":email", email);
+
+    if (!query.exec() || !query.next()) {
+        showStatus("Aucun compte associe a cet email.", false);
+        emailEdit->setFocus();
+        return;
+    }
+
+    QString motDePasse = query.value(0).toString();
+
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    bool sent = OtpManager::getInstance().sendPasswordEmail(email, motDePasse);
+    QApplication::restoreOverrideCursor();
+
+    if (sent) {
+        showStatus("Mot de passe envoye ! Verifiez votre boite mail.", true);
+        QTimer::singleShot(2500, this, &QDialog::accept);
+    } else {
+        showStatus("Envoi echoue. Verifiez votre connexion internet.", false);
+    }
 }
